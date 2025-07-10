@@ -1,0 +1,7 @@
+name: mpq7932_project
+build:
+  cmake: .
+  kconfig: Kconfig
+  settings:
+    dts_root: .
+

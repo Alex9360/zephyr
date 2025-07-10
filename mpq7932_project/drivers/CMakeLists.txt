@@ -1,0 +1,1 @@
+add_subdirectory_ifdef(CONFIG_MPQ7932 mpq7932)
