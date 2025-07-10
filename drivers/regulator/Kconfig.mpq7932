@@ -1,6 +1,5 @@
-config MPQ7932
+config REGULATOR_MPQ7932
 	bool "MPQ7932 sensor"
-	default y
-	depends on I2C
+	depends on I2C && SMBUS
 	help
 	   I2C should enable to enabling this driver

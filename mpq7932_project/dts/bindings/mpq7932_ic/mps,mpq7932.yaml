@@ -3,20 +3,5 @@ description: Monolithic Power MPQ7932 PMIC
 compatible: "mps,mpq7932"
 
 include: [i2c-device.yaml]
-
-properties:
-  regulators:
-    type: object
-    description: Child regulators supported by this PMIC
-
 child-binding:
   description: Regulator output channel
-  properties:
-    regulator-name:
-      type: string
-    regulator-min-microvolt:
-      type: int
-    regulator-max-microvolt:
-      type: int
-    regulator-boot-on:
-      type: boolean

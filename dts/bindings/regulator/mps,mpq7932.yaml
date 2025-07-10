@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Monolithic Power MPQ7932 PMIC with integrated buck regulators
+  Supports 6 buck converters with PMBus interface
+
+compatible: "mps,mpq7932"
+
+include: [base.yaml, i2c-device.yaml]
+
+properties:
+  reg:
+    type: array
+    required: true
+    description: I2C slave address (0x03 for MPQ7932)
+
+  "#address-cells":
+    const: 1
+
+  "#size-cells":
+    const: 0
+
+child-binding:
+  description: Buck regulator output
+  properties:
+    regulator-name:
+      type: string
+      required: true
+      description: Name of the regulator (e.g., "buck1")
+
+    regulator-page:
+      type: int
+      required: true
+      description: PMBus page number (0-5 for BUCK1-BUCK6)
+
+    regulator-min-microvolt:
+      type: int
+      required: true
+      description: Minimum output voltage in microvolts
+
+    regulator-max-microvolt:
+      type: int
+      required: true
+      description: Maximum output voltage in microvolts
+
+    regulator-boot-on:
+      type: boolean
+      description: Enable regulator during boot
+

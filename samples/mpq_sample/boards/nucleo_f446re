@@ -1,0 +1,23 @@
+&i2c1 {
+    status = "okay";
+    clock-frequency = <I2C_BITRATE_FAST>;
+    pinctrl-0 = <&i2c1_scl_pb8 &i2c1_sda_pb9>;
+    pinctrl-names = "default";
+
+    pmic0: pmic@3 {
+        compatible = "mps,mpq7932";
+        reg = <0x03>;
+        status = "okay";
+        regulators {
+            status = "okay";
+            buck1: regulator-buck1 {
+                regulator-name = "buck1";
+                regulator-page = <0>;
+                regulator-min-microvolt = <600000>;
+                regulator-max-microvolt = <1800000>;
+                regulator-boot-on;
+		status="okay";
+            };
+        };
+    };
+};

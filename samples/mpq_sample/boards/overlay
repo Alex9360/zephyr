@@ -1,9 +1,0 @@
-&i2c1 {
-	status = "okay";
-    pmic0: pmic@4b {
-        compatible = "mps,mpq7932";
-        reg = <0x4b>;
-        status = "okay";
-    };
-};
-

@@ -219,6 +219,8 @@ static inline int pmbus_update_byte_data(const struct device *dev, uint8_t addr,
         if (ret) return ret;
 
         uint8_t updated = (orig & ~mask) | (value & mask);
+	if(updated == orig) 
+		return 0;
         return pmbus_write_byte_data(dev, addr, page, reg, updated);
 }
 

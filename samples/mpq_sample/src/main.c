@@ -1,13 +1,14 @@
-#include <zephyr/kernel.h>
+/*#include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/sys/printk.h>
 #include "mpq7932.h"
+//#include <zephyr/pmbus.h>
 
 #define PMIC_NODE DT_NODELABEL(pmic0)
 #define PMBUS_PAGE 0
 #define VOUT_SET 1.2f
 
-void main(void)
+void main()
 {
 	printk("MPQ7932 PMBus Driver Test Start\n");
 
@@ -18,6 +19,11 @@ void main(void)
 		return;
 	}
 	printk("PMIC device ready\n");
+	const struct mpq7932_driver_api* vol = pmic->api;
+	if(vol->set_vout(pmic, PMBUS_PAGE, true) == 0)
+		printk("output is enabled");
+}
+	/*
 
 	if (mpq7932_output_enable(pmic, PMBUS_PAGE, true) == 0) {
 		printk(" Output enabled\n");
@@ -35,5 +41,38 @@ void main(void)
 	} else {
 		printk("Failed to clear faults\n");
 	}
+}*/
+
+
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/regulator.h>
+#include <zephyr/sys/printk.h>
+
+#define BUCK_NODE DT_NODELABEL(pmic)
+
+int main(void)
+{
+    const struct device *buck = DEVICE_DT_GET(BUCK_NODE);
+    if (!device_is_ready(buck)) {
+        printk("Buck regulator not ready\n");
+        return -EINVAL;
+    }
+
+    printk("Enabling buck1...\n");
+    if (regulator_enable(buck) == 0) {
+        printk(" Buck1 enabled\n");
+    }
+
+    printk("setting buck1 to 1.2V\n");
+    if (regulator_set_voltage(buck, 1200000, 1200000) == 0) {
+        printk(" Voltage set\n");
+    }
+
+    int32_t voltage;
+    if (regulator_get_voltage(buck, &voltage) == 0) {
+        printk("Voltage read: %d uV\n", voltage);
+    }
+    return 0;
 }
 

@@ -15,9 +15,9 @@
 #define MPQ7932_VOUT_MAX            0x24
 #define MPQ7932_VOUT_MIN            0x2B
 
-/*struct mpq7932_config {
+struct mpq7932_config {
 	const struct i2c_dt_spec i2c;
-};*/
+};
 
 static int mpq7932_init(const struct device *dev)
 {
