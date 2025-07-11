@@ -135,4 +135,5 @@ watchdog	Watchdog
 wifi	Wi-Fi
 xen	Xen
 xspi	xSPI (Expanded Serial Peripheral Interface)
+pmic    PMIC (power management integrated circuit)
 # zephyr-keep-sorted-stop

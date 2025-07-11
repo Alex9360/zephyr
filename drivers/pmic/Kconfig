@@ -1,0 +1,12 @@
+
+menuconfig PMIC
+    bool "Power Management IC (PMIC) drivers"
+    help
+      Enable support for PMIC drivers.
+
+if PMIC
+
+source "drivers/pmic/Kconfig.pmic_mpq7932"
+
+endif # PMIC
+

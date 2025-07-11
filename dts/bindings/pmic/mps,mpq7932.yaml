@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Binding for Monolithic Power Systems MPQ7932 Power Management IC (PMIC)
+
+compatible: "mps,mpq7932"
+
+include: [base.yaml, i2c-device.yaml]
+
+properties:
+  reg:
+    type: array
+    required: true
+    description: I2C address of the MPQ7932 device
+
