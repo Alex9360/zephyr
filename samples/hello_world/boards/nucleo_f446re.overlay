@@ -1,8 +1,8 @@
 &i2c1{
  status="okay";
-pmic: pmic@10 {
+pmic: pmic@50 {
 	compatible = "mps,mpq7932";
-	reg =<0x10>;
+	reg =<0x50>;
 	status="okay";
 };
 };
