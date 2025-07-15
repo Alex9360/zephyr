@@ -49,7 +49,7 @@ void main()
 #include <zephyr/drivers/regulator.h>
 #include <zephyr/sys/printk.h>
 
-#define BUCK_NODE DT_NODELABEL(pmic)
+#define BUCK_NODE DT_NODELABEL(buck1)
 
 int main(void)
 {

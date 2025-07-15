@@ -151,7 +151,7 @@ static DEVICE_API(regulator, mpq7932_api) = {
 
 DT_INST_FOREACH_STATUS_OKAY(MPQ7932_DEFINE)
 */
-
+#if 0
 #include <zephyr/device.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/regulator.h>
@@ -279,7 +279,7 @@ static int mpq7932_reg_init(const struct device *dev)
         &mpq7932_reg_api);
 
 DT_INST_FOREACH_STATUS_OKAY(MPQ7932_DEFINE)
-*/
+
 
 #define MPQ7932_REGULATOR_DEFINE(inst) \
     static const struct mpq7932_config mpq7932_cfg_##inst = { \
@@ -299,7 +299,120 @@ DT_INST_FOREACH_STATUS_OKAY(MPQ7932_DEFINE)
         CONFIG_REGULATOR_INIT_PRIORITY, \
         &mpq7932_api);
 DT_INST_FOREACH_STATUS_OKAY(MPQ7932_REGULATOR_DEFINE)
+#endif
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/regulator.h>
+#include <zephyr/init.h>
+#include <zephyr/pmbus.h>
 
+#define DT_DRV_COMPAT mps_mpq7932
+
+#define PMBUS_OPERATION     0x01
+#define PMBUS_VOUT_COMMAND  0x21
+
+enum mpq7932_op {
+    MPQ7932_OP_ENABLE,
+    MPQ7932_OP_DISABLE,
+    MPQ7932_OP_SET_VOLTAGE,
+    MPQ7932_OP_GET_VOLTAGE,
+};
+
+struct mpq7932_config {
+    struct i2c_dt_spec i2c;
+};
+
+struct mpq7932_data {
+    uint8_t page;
+    uint32_t min_uv;
+    uint32_t max_uv;
+};
+
+static int mpq7932_control(const struct device *dev, enum mpq7932_op op, int32_t *uvolt)
+{
+    const struct mpq7932_config *cfg = dev->config;
+    struct mpq7932_data *data = dev->data;
+
+    switch (op) {
+    case MPQ7932_OP_ENABLE:
+        return pmbus_update_byte_data(cfg->i2c.bus, cfg->i2c.addr, data->page, PMBUS_OPERATION, 0x80, 0x80);
+    case MPQ7932_OP_DISABLE:
+        return pmbus_update_byte_data(cfg->i2c.bus, cfg->i2c.addr, data->page, PMBUS_OPERATION, 0x80, 0x00);
+    case MPQ7932_OP_SET_VOLTAGE:
+        if (!uvolt) return -EINVAL;
+        {
+            uint8_t code = (*uvolt - 206250) / 6250;
+            return pmbus_write_byte_data(cfg->i2c.bus, cfg->i2c.addr, data->page, PMBUS_VOUT_COMMAND, code);
+        }
+    case MPQ7932_OP_GET_VOLTAGE:
+        if (!uvolt) return -EINVAL;
+        {
+            uint8_t code;
+            int ret = pmbus_read_byte_data(cfg->i2c.bus, cfg->i2c.addr, data->page, PMBUS_VOUT_COMMAND, &code);
+            if (ret == 0) {
+                *uvolt = 206250 + code * 6250;
+            }
+            return ret;
+        }
+    default:
+        return -ENOTSUP;
+    }
+}
+
+static int mpq7932_enable(const struct device *dev)
+{
+    return mpq7932_control(dev, MPQ7932_OP_ENABLE, NULL);
+}
+
+static int mpq7932_disable(const struct device *dev)
+{
+    return mpq7932_control(dev, MPQ7932_OP_DISABLE, NULL);
+}
+
+static int mpq7932_set_voltage(const struct device *dev, int32_t min_uv, int32_t max_uv)
+{
+    int32_t target = CLAMP(min_uv, 600000, max_uv);
+    return mpq7932_control(dev, MPQ7932_OP_SET_VOLTAGE, &target);
+}
+
+static int mpq7932_get_voltage(const struct device *dev, int32_t *uvolt)
+{
+    return mpq7932_control(dev, MPQ7932_OP_GET_VOLTAGE, uvolt);
+}
+
+static int mpq7932_init(const struct device *dev)
+{
+    const struct mpq7932_config *cfg = dev->config;
+    return device_is_ready(cfg->i2c.bus) ? 0 : -ENODEV;
+}
+
+static const struct regulator_driver_api mpq7932_api = {
+    .enable = mpq7932_enable,
+    .disable = mpq7932_disable,
+    .set_voltage = mpq7932_set_voltage,
+    .get_voltage = mpq7932_get_voltage,
+};
+
+#define MPQ7932_REGULATOR_DEFINE(child) \
+    static const struct mpq7932_config mpq7932_cfg_##child = { \
+        .i2c = I2C_DT_SPEC_GET(child), \
+    }; \
+    static struct mpq7932_data mpq7932_data_##child = { \
+        .page = DT_PROP(child, regulator_page), \
+        .min_uv = DT_PROP(child, regulator_min_microvolt), \
+        .max_uv = DT_PROP(child, regulator_max_microvolt), \
+    }; \
+    DEVICE_DT_DEFINE(child, \
+        mpq7932_init, \
+        NULL, \
+        &mpq7932_data_##child, \
+        &mpq7932_cfg_##child, \
+        POST_KERNEL, \
+        CONFIG_REGULATOR_INIT_PRIORITY, \
+        &mpq7932_api);
+
+DT_FOREACH_CHILD_STATUS_OKAY(DT_NODELABEL(pmic), MPQ7932_REGULATOR_DEFINE)
 
 
 

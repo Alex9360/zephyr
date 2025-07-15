@@ -1,49 +1,64 @@
 # SPDX-License-Identifier: Apache-2.0
 
 description: |
-  Monolithic Power MPQ7932 PMIC with integrated buck regulators
-  Supports 6 buck converters with PMBus interface
+  Monolithic Power Systems MPQ7932 PMIC with integrated buck regulators.
+  Supports 6 buck converters via PMBus over I2C.
+  Each buck is represented as a child node with page, voltage, and control.
 
 compatible: "mps,mpq7932"
 
-include: [base.yaml, i2c-device.yaml]
+include:
+  - i2c-device.yaml
 
 properties:
   reg:
     type: array
     required: true
-    description: I2C slave address (0x03 for MPQ7932)
+    description: I2C address of the MPQ7932 device (usually 0x03 or 0x4B)
 
   "#address-cells":
+    type: int
     const: 1
 
   "#size-cells":
+    type: int
     const: 0
 
 child-binding:
-  description: Buck regulator output
+  description: Buck regulator child node
   properties:
     regulator-name:
       type: string
       required: true
-      description: Name of the regulator (e.g., "buck1")
+      description: |
+        Name of the regulator. Used to identify the regulator.
 
     regulator-page:
       type: int
       required: true
-      description: PMBus page number (0-5 for BUCK1-BUCK6)
+      description: |
+        PMBus page number corresponding to the buck regulator.
+        0 for BUCK1, 1 for BUCK2, ..., up to 5 for BUCK6.
 
     regulator-min-microvolt:
       type: int
       required: true
-      description: Minimum output voltage in microvolts
+      description: |
+        Minimum voltage this regulator can output, in microvolts.
 
     regulator-max-microvolt:
       type: int
       required: true
-      description: Maximum output voltage in microvolts
+      description: |
+        Maximum voltage this regulator can output, in microvolts.
 
     regulator-boot-on:
       type: boolean
-      description: Enable regulator during boot
+      description: |
+        If present, the regulator will be enabled at boot.
+
+    regulator-always-on:
+      type: boolean
+      description: |
+        If present, the regulator is always on and cannot be disabled.
 

@@ -1,19 +1,29 @@
 &i2c1 {
     status = "okay";
+
     pmic: pmic@3 {
         compatible = "mps,mpq7932";
         reg = <0x03>;
         #address-cells = <1>;
         #size-cells = <0>;
-	status="okay";
-       buck1: buck1 {
+        status = "okay";
+
+        buck1: buck1 {
             regulator-name = "buck1";
             regulator-page = <0>;
             regulator-min-microvolt = <600000>;
             regulator-max-microvolt = <1800000>;
             regulator-boot-on;
-	    status="okay";
+            status = "okay";
         };
 
+        buck2: buck2 {
+            regulator-name = "buck2";
+            regulator-page = <1>;
+            regulator-min-microvolt = <800000>;
+            regulator-max-microvolt = <3300000>;
+            status = "okay";
+        };
     };
 };
+

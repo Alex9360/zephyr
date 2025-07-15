@@ -209,7 +209,7 @@ static inline uint16_t pmbus_float_to_linear11(float value)
 	}
 	return 0;
 }
-*/
+
 static inline int pmbus_update_byte_data(const struct device *dev, uint8_t addr, uint8_t page,
                                          uint8_t reg, uint8_t mask, uint8_t value)
 {
@@ -220,6 +220,6 @@ static inline int pmbus_update_byte_data(const struct device *dev, uint8_t addr,
         uint8_t updated = (orig & ~mask) | (value & mask);
         return pmbus_write_byte_data(dev, addr, page, reg, updated);
 }
-
+*/
 
 #endif 
