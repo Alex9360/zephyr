@@ -1,0 +1,14 @@
+&comp0 {
+	status = "okay";
+	positive-inputs = <0>;
+	negative-inputs = <0>;
+	pinctrl-0 = <&comp0_out_pa7>;
+	pinctrl-names = "default";
+	hysteresis = <30>;
+	mode = "fast";
+	reference-enable;
+	reference-source = "vdda_dac";
+	reference-terminal = "neg";
+	filter-enable;
+	filter-delay = <2700>;
+};
