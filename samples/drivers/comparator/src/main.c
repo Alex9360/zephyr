@@ -27,7 +27,7 @@ int main(void)
 
 	comparator_set_trigger_callback(comp, comp_callback, NULL);
 
-	ret = comparator_set_trigger(comp, COMPARATOR_TRIGGER_RISING_EDGE);
+	ret = comparator_set_trigger(comp, COMPARATOR_TRIGGER_FALLING_EDGE);
 	if (ret < 0) {
 		printk("failed to set trigger\n");
 		return 0;

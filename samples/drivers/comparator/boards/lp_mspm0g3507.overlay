@@ -4,11 +4,19 @@
 	negative-inputs = <0>;
 	pinctrl-0 = <&comp0_out_pa7>;
 	pinctrl-names = "default";
-	hysteresis = <30>;
 	mode = "fast";
-	reference-enable;
-	reference-source = "vdda_dac";
 	reference-terminal = "neg";
 	filter-enable;
 	filter-delay = <2700>;
+	window-mode-enable;
+	window-companion =<&comp1>;
+	window-signal-input = <0>;
+	window-upper-threshold = <2>;
+	window-lower-threshold = <2>;
+};
+
+&comp1 {
+	status = "okay";
+	pinctrl-0 = <&comp1_out_pa3>;
+	pinctrl-names = "default";
 };
