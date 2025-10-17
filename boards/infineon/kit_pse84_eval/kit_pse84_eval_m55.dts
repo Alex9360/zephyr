@@ -59,3 +59,7 @@
 &mcwdt1 {
 	status = "okay";
 };
+
+&mcwdt1 {
+	status = "okay";
+};
