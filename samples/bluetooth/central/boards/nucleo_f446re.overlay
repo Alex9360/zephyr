@@ -1,0 +1,15 @@
+/ {
+        chosen {
+                zephyr,bt-hci = &bt_hci_uart;
+        };
+};
+
+&usart1 {
+        status = "okay";
+	current-speed = <115200>;
+//	hw-flow-control;
+        bt_hci_uart: bt_hci_uart {
+                     compatible = "zephyr,bt-hci-uart";
+                     status = "okay";
+             };
+}; 
