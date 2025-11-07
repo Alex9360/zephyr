@@ -33,9 +33,14 @@ void enable_sys_int(uint32_t int_num, uint32_t priority, void (*isr)(const void 
 	} else {
 		k_fatal_halt(K_ERR_CPU_EXCEPTION);
 	}
-
 	NVIC_ClearPendingIRQ(int_num);
 	NVIC_EnableIRQ(priority);
+}
+void handle_SAR_ADC_IRQ(void)
+{
+    /* Get interrupt source */
+   printk("INTR FIRED");
+   NVIC_ClearPendingIRQ((IRQn_Type)3);
 }
 
 __attribute__((section(".itcm"))) void sys_int_handler(uint32_t intrNum)
@@ -75,6 +80,7 @@ void system_irq_init(void)
 	IRQ_CONNECT(1, 1, sys_int_handler, 1, 0);
 	IRQ_CONNECT(2, 2, sys_int_handler, 2, 0);
 	IRQ_CONNECT(3, 3, sys_int_handler, 3, 0);
+	//IRQ_CONNECT(3, 3, handle_SAR_ADC_IRQ, 3, 0);
 	IRQ_CONNECT(4, 4, sys_int_handler, 4, 0);
 	IRQ_CONNECT(5, 5, sys_int_handler, 5, 0);
 	IRQ_CONNECT(6, 6, sys_int_handler, 6, 0);

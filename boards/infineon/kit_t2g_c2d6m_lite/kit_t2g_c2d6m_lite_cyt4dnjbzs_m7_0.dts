@@ -79,7 +79,7 @@ uart7: &scb7 {
 
 i2c11: &scb11 {
        compatible = "infineon,cat1-i2c-pdl";
-       status = "okay";
+       status = "disabled";
 
        #address-cells = <1>;
        #size-cells = <0>;
@@ -152,4 +152,14 @@ spi0: &scb0 {
 		reg = <0>;
 		spi-max-frequency = <3000000>;
 	};
+};
+
+&adc0 {
+       status = "okay";
+       clock-frequency = <20000000>;
+  //     clocks = <&clk_hf2>;
+       ifx,peri-group = <IFX_PERI_GRP_INST_SEL(1, 0)>;
+       ifx,peri-clk = <0x0114>;
+       ifx,peri-div = <0>; /* 8-bit divider */
+       ifx,peri-div-inst = <1>;
 };

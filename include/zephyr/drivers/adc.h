@@ -1030,7 +1030,7 @@ static inline int adc_sequence_init_dt(const struct adc_dt_spec *spec,
 		return -ENOTSUP;
 	}
 
-	seq->channels = BIT(spec->channel_id);
+	seq->channels |= BIT(spec->channel_id);
 	seq->resolution = spec->resolution;
 	seq->oversampling = spec->oversampling;
 
