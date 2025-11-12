@@ -44,6 +44,7 @@ struct ifx_cat1_sar_data {
 	const struct device *dev;
 	uint16_t *buffer;
 	uint16_t *repeat_buffer;
+//	cy_stc_sar2_channel_config_t cy_ch_cfg;
 };
 
 static int ifx_cat1_sar_channel_setup(const struct device *dev,
@@ -72,6 +73,7 @@ static int ifx_cat1_sar_channel_setup(const struct device *dev,
 		LOG_ERR("Unsupported reference source");
 		return -ENOTSUP;
 	}
+#if 1
         cy_ch_cfg.channelHwEnable = true;
         cy_ch_cfg.triggerSelection = CY_SAR2_TRIGGER_OFF;
         cy_ch_cfg.channelPriority = 0U;
@@ -123,9 +125,63 @@ static int ifx_cat1_sar_channel_setup(const struct device *dev,
         if (status != CY_SAR2_SUCCESS) {
                 return -EIO;
         }
+#endif
+#if 0
+        data->cy_ch_cfg.channelHwEnable = true;
+        data->cy_ch_cfg.triggerSelection = CY_SAR2_TRIGGER_OFF;
+        data->cy_ch_cfg.channelPriority = 0U;
+        data->cy_ch_cfg.preenptionType = CY_SAR2_PREEMPTION_FINISH_RESUME;
+        data->cy_ch_cfg.isGroupEnd = false;
+        data->cy_ch_cfg.doneLevel = CY_SAR2_DONE_LEVEL_LEVEL;
+	/* channel_cfg->input_positive (pin number to given it as address) */
+        data->cy_ch_cfg.pinAddress = channel_cfg->input_positive;
+
+        data->cy_ch_cfg.portAddress = CY_SAR2_PORT_ADDRESS_SARMUX0;
+        data->cy_ch_cfg.extMuxSelect = 0U;
+        data->cy_ch_cfg.extMuxEnable = false;
+        data->cy_ch_cfg.preconditionMode = CY_SAR2_PRECONDITION_MODE_OFF;
+        data->cy_ch_cfg.overlapDiagMode = CY_SAR2_OVERLAP_DIAG_MODE_OFF;
+	/* sample time needs to be recalculated */
+  	if (channel_cfg->acquisition_time != ADC_ACQ_TIME_DEFAULT) {
+		switch (ADC_ACQ_TIME_UNIT(channel_cfg->acquisition_time)) {
+		case ADC_ACQ_TIME_TICKS:
+			sample_time = ADC_ACQ_TIME_VALUE(channel_cfg->acquisition_time);
+			break;
+		case ADC_ACQ_TIME_MICROSECONDS:
+			sample_time = ADC_ACQ_TIME_VALUE(channel_cfg->acquisition_time) * ((config->frequency) / 1000000);
+			break;
+		case ADC_ACQ_TIME_NANOSECONDS:
+			/* FIXME formula has to be recalculated */
+			sample_time = (ADC_ACQ_TIME_VALUE(channel_cfg->acquisition_time) + 49) % 50;
+			break;
+		default:
+			LOG_ERR("Selected ADC acquisition time units is not valid");
+			return -EINVAL;
+		}
+	}
+	data->cy_ch_cfg.sampleTime = sample_time;
+        data->cy_ch_cfg.calibrationValueSelect = CY_SAR2_CALIBRATION_VALUE_REGULAR;
+        data->cy_ch_cfg.resultAlignment = CY_SAR2_RESULT_ALIGNMENT_RIGHT;
+
+        data->cy_ch_cfg.signExtention = CY_SAR2_SIGN_EXTENTION_UNSIGNED;
+        data->cy_ch_cfg.postProcessingMode = CY_SAR2_POST_PROCESSING_MODE_NONE;
+        data->cy_ch_cfg.averageCount = 1U;
+        data->cy_ch_cfg.rightShift = 0U;
+        data->cy_ch_cfg.positiveReload = 0U;
+        data->cy_ch_cfg.negativeReload = 0U;
+        data->cy_ch_cfg.rangeDetectionMode = CY_SAR2_RANGE_DETECTION_MODE_BELOW_LO;
+        data->cy_ch_cfg.rangeDetectionLoThreshold = 0U;
+        data->cy_ch_cfg.rangeDetectionHiThreshold = 0xFFFU;
+        data->cy_ch_cfg.interruptMask = 0U;
+	
+	status = Cy_SAR2_Channel_Init(config->base, channel_id, &data->cy_ch_cfg);
+        if (status != CY_SAR2_SUCCESS) {
+                return -EIO;
+        }
 	/* REFERENCE NEEDS TO SELECTED TODO */
 //	 Cy_SAR2_SetReferenceBufferMode(PASS0_EPASS_MMIO, CY_SAR2_REF_BUF_MODE_ON); 
 	LOG_INF("channel setup done");
+#endif
         return 0;
 }
 
@@ -174,10 +230,15 @@ static void adc_context_start_sampling(struct adc_context *ctx)
 	uint8_t first_ch = find_lsb_set(ctx->sequence.channels)-1;
 	uint32_t mask;
 	data->repeat_buffer = data->buffer;
+#if 0
+        data->cy_ch_cfg.isGroupEnd = true;
+	Cy_SAR2_Channel_Init(config->base, last_ch, &data->cy_ch_cfg);
+#endif
 	Cy_SAR2_Channel_ClearInterrupt(config->base, last_ch, CY_SAR2_INT_GRP_DONE);
 	Cy_SAR2_Channel_SetInterruptMask(config->base, last_ch, CY_SAR2_INT_GRP_DONE);
 	Cy_SAR2_Channel_SoftwareTrigger(config->base, first_ch);
 	mask = Cy_SAR2_GetPendingStatus(config->base);
+	LOG_INF("TOTAL CHANNEL = %d",ctx->sequence.channels);
 	LOG_INF("FIRST CHANNEL = %d",first_ch);
 	LOG_INF("LAST CHANNEL = %d",last_ch);
 	LOG_INF("PENDING STATUS = %d",mask);
@@ -368,13 +429,19 @@ static DEVICE_API(adc, ifx_cat1_driver_api) = {
 #endif
 };
 
-#define SAR_CAT1_INIT_FUNC(n)                                                                 \
-        static void ifx_cat1_sar_irq_config_func_##n(const struct device *dev)                \
- 	{                                                                                     \
-                enable_sys_int(DT_INST_PROP_BY_IDX(n, system_interrupts, 0),                  \
-                               DT_INST_PROP_BY_IDX(n, system_interrupts, 1),                  \
-                               (void (*)(const void *))(void *)ifx_cat1_sar_isr, dev);        \
-        }
+#define IRQ_CONFIGURE(n, inst)                                                                     \
+	enable_sys_int(DT_INST_PROP_BY_IDX(inst, system_interrupts, 0 + (n*2)),                    \
+		       DT_INST_PROP_BY_IDX(inst, system_interrupts, 1 + (n*2)),                    \
+	               (void (*)(const void *))(void *)ifx_cat1_sar_isr,                           \
+	               DEVICE_DT_INST_GET(inst));                                                  \
+
+#define CONFIGURE_ALL_IRQS(inst, n) LISTIFY(n, IRQ_CONFIGURE, (), inst)
+
+#define SAR_CAT1_INIT_FUNC(n)                                                                   \
+        static void ifx_cat1_sar_irq_config_func_##n(const struct device *dev)                  \
+ 	{                                                                                       \
+	       CONFIGURE_ALL_IRQS(n , MAX_CHANNELS);						\
+	}
 	
 #define IFX_SAR_ADC_INIT(n)								       \
 	PINCTRL_DT_INST_DEFINE(n);                                                             \

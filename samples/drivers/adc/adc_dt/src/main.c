@@ -81,6 +81,8 @@ int main(void)
 			       adc_channels[i].channel_id);
 
 			(void)adc_sequence_init_dt(&adc_channels[i], &sequence);
+		}
+		for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
 			int32_t val_mv;
 			err = adc_read_dt(&adc_channels[i], &sequence);
 			if (err < 0) {
