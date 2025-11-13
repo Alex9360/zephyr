@@ -36,7 +36,7 @@ int main(void)
 {
 	int err;
 	uint32_t count = 0;
-	uint16_t buf;
+	uint16_t buf[16];
 	struct adc_sequence sequence = {
 		.buffer = &buf,
 		/* buffer size in bytes, not number of samples */
@@ -81,24 +81,21 @@ int main(void)
 			       adc_channels[i].channel_id);
 
 			(void)adc_sequence_init_dt(&adc_channels[i], &sequence);
-		}
-		for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
 			int32_t val_mv;
 			err = adc_read_dt(&adc_channels[i], &sequence);
 			if (err < 0) {
 				printk("Could not read (%d)\n", err);
 				continue;
 			}
-			printk("DONE INTO READING\n");
 			/*
 			 * If using differential mode, the 16 bit value
 			 * in the ADC sample buffer should be a signed 2's
 			 * complement value.
 			 */
 			if (adc_channels[i].channel_cfg.differential) {
-				val_mv = (int32_t)((int16_t)buf);
+				val_mv = (int32_t)((int16_t)buf[i]);
 			} else {
-				val_mv = (int32_t)buf;
+				val_mv = (int32_t)buf[i];
 			}
 			printk("%"PRId32, val_mv);
 			err = adc_raw_to_millivolts_dt(&adc_channels[i],
