@@ -47,14 +47,16 @@ LOG_MODULE_REGISTER(adc_mspm0);
 
 struct adc_mspm0_data {
 	struct adc_context ctx;
-	const struct device *dev;
 	struct k_mutex dev_lock;
+	const struct device *dev;
 	uint16_t *buffer;
 	uint16_t *repeat_buffer;
 	uint16_t sample_time[ADC_MSPM0_NUM_SAMPLE_TIMERS];
 	uint8_t channel_mem_ctl[ADC_MSPM0_CHANNEL_MAX];
 	uint8_t channel_eoc;
+#ifdef CONFIG_REGULATOR_MSPM0_VREF
 	uint8_t vref_flags;
+#endif
 };
 
 struct adc_mspm0_cfg {
@@ -103,8 +105,6 @@ static void adc_context_start_sampling(struct adc_context *ctx)
 	struct adc_mspm0_data *data = CONTAINER_OF(ctx, struct adc_mspm0_data, ctx);
 	const struct device *dev = data->dev;
 	const struct adc_mspm0_cfg *config = dev->config;
-
-	data->repeat_buffer = data->buffer;
 
 	DL_ADC12_clearInterruptStatus(config->base, ((1 << data->channel_eoc) <<
 				      ADC12_CPU_INT_IMASK_MEMRESIFG0_OFS));
@@ -190,6 +190,7 @@ static int adc_mspm0_channel_setup(const struct device *dev,
 	case ADC_REF_VDD_1:
 		data->channel_mem_ctl[ch] |= (ADC_MSPM0_REF_VDD << ADC_MSPM0_CHANNEL_CFG_REF_SHIFT);
 		break;
+#ifdef CONFIG_REGULATOR_MSPM0_VREF
 	case ADC_REF_INTERNAL:
 		data->channel_mem_ctl[ch] |= (ADC_MSPM0_REF_INTERNAL <<
 					      ADC_MSPM0_CHANNEL_CFG_REF_SHIFT);
@@ -222,6 +223,7 @@ static int adc_mspm0_channel_setup(const struct device *dev,
 			data->vref_flags |= EXT_VREF;
 		}
 		break;
+#endif
 	default:
 		ret = -EINVAL;
 		goto unlock;
@@ -326,12 +328,14 @@ static int adc_mspm0_configSequence(const struct device *dev, const struct adc_s
 		case ADC_MSPM0_REF_VDD:
 			vrsel = DL_ADC12_REFERENCE_VOLTAGE_VDDA;
 			break;
+#ifdef CONFIG_REGULATOR_MSPM0_VREF
 		case ADC_MSPM0_REF_INTERNAL:
 			vrsel = DL_ADC12_REFERENCE_VOLTAGE_INTREF;
 			break;
 		case ADC_MSPM0_REF_EXTERNAL:
 			vrsel = DL_ADC12_REFERENCE_VOLTAGE_EXTREF;
 			break;
+#endif
 		default:
 			LOG_ERR("Invalid reference index for channel %d", ch);
 			return -EINVAL;
@@ -418,6 +422,7 @@ static int adc_mspm0_read_internal(const struct device *dev, const struct adc_se
 
 	data->channel_eoc = ch_count - 1;
 	data->buffer = sequence->buffer;
+	data->repeat_buffer = data->buffer;
 
 	sequence_ret = adc_mspm0_configSequence(dev, sequence);
 	if (sequence_ret < 0) {

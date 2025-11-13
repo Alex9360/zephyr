@@ -80,6 +80,12 @@ properties:
   max_result_reg:
     type: int
     required: true
+    description: |
+       Number of conversion result memory registers available on this ADC instance.
+       L-series devices typically have 4 registers (MEMRES0:3), while G-series 
+       devices typically have 12 registers (MEMRES0:11). This determines the 
+       maximum number of channels that can be converted in a single sequence 
+       without CPU intervention.
 
 io-channel-cells:
   - input
