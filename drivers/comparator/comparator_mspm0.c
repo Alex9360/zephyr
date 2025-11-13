@@ -24,14 +24,14 @@ struct comparator_mspm0_ref_config {
 };
 
 struct comparator_mspm0_config {
-	COMP_Regs *regs;
-	const struct pinctrl_dev_config *pincfg;
 	DL_COMP_IPSEL_CHANNEL pos_amux_ch;
 	DL_COMP_IMSEL_CHANNEL neg_amux_ch;
 	DL_COMP_MODE mode;
 	DL_COMP_HYSTERESIS hysteresis;
 	struct comparator_mspm0_ref_config ref_config;
 	DL_COMP_FILTER_DELAY filter_delay;
+	COMP_Regs *regs;
+	const struct pinctrl_dev_config *pincfg;
 	void (*irq_config_func)(const struct device *dev);
 	const struct device *ref;
 #ifdef CONFIG_COMPARATOR_MSPM0_WINDOW_MODE
@@ -208,17 +208,18 @@ static int comparator_mspm0_init(const struct device *dev)
 		DL_COMP_setDACCode0(config->regs, config->ref_config.dac_code0);
 		DL_COMP_setDACCode1(config->regs, config->ref_config.dac_code1);
 		if (config->ref_config.terminal == DL_COMP_REF_TERMINAL_SELECT_NEG) {
-		/* neg reference terminal is selected then only enable positive channel selection*/
+		/* neg reference terminal is selected then only enable positive channel selection */
 			DL_COMP_setEnabledInputChannels(config->regs,
 							DL_COMP_ENABLE_CHANNEL_POS);
 		} else {
-		/* pos reference terminal is selected then only enable negative channel selection*/
+		/* pos reference terminal is selected then only enable negative channel selection */
 			DL_COMP_setEnabledInputChannels(config->regs,
 							DL_COMP_ENABLE_CHANNEL_NEG);
 		}
 
 		DL_COMP_setReferenceCompTerminal(config->regs,
 						 config->ref_config.terminal);
+#ifdef CONFIG_REGULATOR_MSPM0_VREF
 		if (config->ref &&
 		    ((config->ref_config.source == DL_COMP_REF_SOURCE_INT_VREF_DAC) ||
 		    (config->ref_config.source == DL_COMP_REF_SOURCE_INT_VREF))) {
@@ -226,6 +227,7 @@ static int comparator_mspm0_init(const struct device *dev)
 				return -ENODEV;
 			}
 		}
+#endif
 	}
 #ifdef CONFIG_COMPARATOR_MSPM0_WINDOW_MODE
 	if (config->window_mode_enable && config->window_companion_regs) {
