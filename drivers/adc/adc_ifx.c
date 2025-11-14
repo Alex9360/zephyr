@@ -40,18 +40,15 @@ struct ifx_cat1_sar_config {
 
 struct ifx_cat1_sar_data {
 	struct adc_context ctx;
-	struct k_work work;
 	const struct device *dev;
 	uint16_t *buffer;
 	uint16_t *repeat_buffer;
-//	cy_stc_sar2_channel_config_t cy_ch_cfg;
 };
 
 static int ifx_cat1_sar_channel_setup(const struct device *dev,
                                       const struct adc_channel_cfg *channel_cfg)
 {
 	const struct ifx_cat1_sar_config *config = dev->config;
-	struct ifx_cat1_sar_data *data = dev->data;
 	uint8_t channel_id = channel_cfg->channel_id;
 	cy_stc_sar2_channel_config_t cy_ch_cfg;
 	cy_en_sar2_status_t status;
@@ -73,7 +70,6 @@ static int ifx_cat1_sar_channel_setup(const struct device *dev,
 		LOG_ERR("Unsupported reference source");
 		return -ENOTSUP;
 	}
-#if 1
         cy_ch_cfg.channelHwEnable = true;
         cy_ch_cfg.triggerSelection = CY_SAR2_TRIGGER_OFF;
         cy_ch_cfg.channelPriority = 0U;
@@ -81,9 +77,18 @@ static int ifx_cat1_sar_channel_setup(const struct device *dev,
         cy_ch_cfg.isGroupEnd = false;
         cy_ch_cfg.doneLevel = CY_SAR2_DONE_LEVEL_LEVEL;
 	/* channel_cfg->input_positive (pin number to given it as address) */
-        cy_ch_cfg.pinAddress = channel_cfg->input_positive;
+	if (channel_cfg->input_positive >=0 && channel_cfg->input_positive <= 39) {
+		cy_ch_cfg.pinAddress = channel_cfg->input_positive;
 
-        cy_ch_cfg.portAddress = CY_SAR2_PORT_ADDRESS_SARMUX0;
+		cy_ch_cfg.portAddress = CY_SAR2_PORT_ADDRESS_SARMUX0;
+	}
+	else if (channel_cfg->input_positive >= 40 && channel_cfg->input_positive <= 63) {
+		printk("above 40 hits \n");	
+		cy_ch_cfg.pinAddress = channel_cfg->input_positive - 40;
+		cy_ch_cfg.portAddress = CY_SAR2_PORT_ADDRESS_SARMUX1;
+	} else {
+		return -EINVAL;
+	}
         cy_ch_cfg.extMuxSelect = 0U;
         cy_ch_cfg.extMuxEnable = false;
         cy_ch_cfg.preconditionMode = CY_SAR2_PRECONDITION_MODE_OFF;
@@ -125,7 +130,6 @@ static int ifx_cat1_sar_channel_setup(const struct device *dev,
         if (status != CY_SAR2_SUCCESS) {
                 return -EIO;
         }
-#endif
         return 0;
 }
 
@@ -136,11 +140,6 @@ static void adc_context_update_buffer_pointer(struct adc_context *ctx, bool repe
 	if (repeat) {
 		data->buffer = data->repeat_buffer;
 	}
-/*	
-	else {
-		data->buffer++;
-	}
-*/
 }
 
 static void ifx_cat1_sar_isr(const struct device *dev)
@@ -154,13 +153,12 @@ static void ifx_cat1_sar_isr(const struct device *dev)
 	Cy_SAR2_Channel_ClearInterrupt(config->base, last_channel, CY_SAR2_INT_GRP_DONE);
 	
 	if (status & CY_SAR2_INT_GRP_DONE) {
-		while((channels != 0) && (status & CY_SAR2_INT_GRP_DONE))
+		while (channels != 0)
 		{
 			ch = find_lsb_set(channels)-1;
 			*data->buffer++ = Cy_SAR2_Channel_GetResult(config->base, ch, NULL);
 			channels &= ~BIT(ch);
 		}
-//		*data->buffer = Cy_SAR2_Channel_GetResult(config->base, ch, NULL);
 	}
 
         (config->base)->CH[last_channel].TR_CTL &= ~BIT(11);
@@ -175,15 +173,9 @@ static void adc_context_start_sampling(struct adc_context *ctx)
 	uint8_t last_ch = find_msb_set(ctx->sequence.channels)-1;
 	uint8_t first_ch = find_lsb_set(ctx->sequence.channels)-1;
 	uint32_t mask;
-	data->repeat_buffer = data->buffer;
-#if 1
-        (config->base)->CH[last_ch].TR_CTL |= BIT(11);
-#endif
+        
+	(config->base)->CH[last_ch].TR_CTL |= BIT(11);
 
-#if 0
-        data->cy_ch_cfg.isGroupEnd = true;
-	Cy_SAR2_Channel_Init(config->base, last_ch, &data->cy_ch_cfg);
-#endif
 	Cy_SAR2_Channel_ClearInterrupt(config->base, last_ch, CY_SAR2_INT_GRP_DONE);
 	Cy_SAR2_Channel_SetInterruptMask(config->base, last_ch, CY_SAR2_INT_GRP_DONE);
 	Cy_SAR2_Channel_SoftwareTrigger(config->base, first_ch);
@@ -231,6 +223,7 @@ static int ifx_cat1_sar_read_internal(const struct device *dev,
         }
 
 	data->buffer = sequence->buffer;
+	data->repeat_buffer = data->buffer;
 	adc_context_start_read(&data->ctx, sequence);
 	LOG_INF("READ STARTED AND WAIT FOR THE RESULT");
 	return adc_context_wait_for_completion(&data->ctx);
@@ -309,10 +302,6 @@ static int ifx_clock_config(const struct device *dev, uint32_t target_freq)
 
     divider = (hf_clock_frequency + (target_freq / 2)) / target_freq;
 
-    if (divider < 2) {
-        divider = 2;
-    }
-
     actual_sar_clock = hf_clock_frequency / divider;
 
     LOG_INF("SAR Clock Config: target=%u, divider=%u, actual=%u",
@@ -373,7 +362,7 @@ static int ifx_cat1_sar_init(const struct device *dev) {
 static DEVICE_API(adc, ifx_cat1_driver_api) = {
 	.channel_setup = ifx_cat1_sar_channel_setup,
 	.read	       = ifx_cat1_sar_read,
-	.ref_internal  = 2300 /* TODO */
+	.ref_internal  = 3300 /* TODO */
 #ifdef CONFIG_ADC_SYNC
 	.read_async    = ifx_cat1_sar_read_async,
 #endif
