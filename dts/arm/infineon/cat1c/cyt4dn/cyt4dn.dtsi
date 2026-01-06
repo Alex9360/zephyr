@@ -2462,5 +2462,16 @@
 				#size-cells = <0>;
 			};
 		};
+
+		 i2s0: tdm@40818000 {
+                        #address-cells = <1>;
+                        #size-cells = <0>;
+                        compatible = "infineon,i2s";
+                        reg = <0x40818000 0x200>;
+                        system-interrupts = <752 4>, /* TX Structure */
+                        <753 4>; /* RX Structure */
+                        status = "disabled";
+                };
+
 	};
 };

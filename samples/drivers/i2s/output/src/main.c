@@ -9,7 +9,7 @@
 #include <zephyr/drivers/i2s.h>
 #include <zephyr/sys/iterable_sections.h>
 
-#define SAMPLE_NO 64
+#define SAMPLE_NO 32
 
 /* The data represent a sine wave */
 static int16_t data[SAMPLE_NO] = {
@@ -39,10 +39,14 @@ static void fill_buf(int16_t *tx_block, int att)
 		tx_block[2 * i + 1] = data[r_idx] / (1 << att);
 	}
 }
-
+#if 1
 #define NUM_BLOCKS 20
 #define BLOCK_SIZE (2 * sizeof(data))
-
+#endif
+#if 0
+#define NUM_BLOCKS 4
+#define BLOCK_SIZE 64
+#endif
 #ifdef CONFIG_NOCACHE_MEMORY
 	#define MEM_SLAB_CACHE_ATTR __nocache
 #else

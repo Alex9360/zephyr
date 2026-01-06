@@ -14,7 +14,7 @@ properties:
     type: array
     required: true
 
-  interrupts:
+  system-interrupts:
     type: array
     required: true
 
@@ -29,3 +29,17 @@ properties:
 
   dma-names:
     required: true
+
+  ifx,peri-group:
+    type: int
+
+  ifx,peri-div:
+    type: int
+    enum:
+      - 0
+      - 1
+      - 2
+      - 3
+
+  ifx,peri-div-inst:
+    type: int

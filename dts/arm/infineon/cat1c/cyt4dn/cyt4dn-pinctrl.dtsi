@@ -317,6 +317,22 @@
 				pinmux = <DT_CAT1_PINMUX(30, 0, HSIOM_SEL_ACT_12)>;
 				input-enable;
 			};
+
+			 /omit-if-no-ref/ p20_2_tdm_i2s0_tx_mck: p20_2_tdm_i2s0_tx_mck {
+                                pinmux = <DT_CAT1_PINMUX(20, 2, HSIOM_SEL_ACT_4)>;
+                        };
+
+                        /omit-if-no-ref/ p20_3_tdm_i2s0_tx_sck: p20_3_tdm_i2s0_tx_sck {
+                                pinmux = <DT_CAT1_PINMUX(20, 3, HSIOM_SEL_ACT_4)>;
+                        };
+
+                        /omit-if-no-ref/ p20_4_tdm_i2s0_tx_fsync: p20_4_tdm_i2s0_tx_fsync {
+                                pinmux = <DT_CAT1_PINMUX(20, 4, HSIOM_SEL_ACT_4)>;
+                        };
+
+                        /omit-if-no-ref/ p20_5_tdm_i2s0_tx_sd: p20_5_tdm_i2s0_tx_sd {
+                                pinmux = <DT_CAT1_PINMUX(20, 5, HSIOM_SEL_ACT_4)>;
+                        };
 		};
 	};
 };

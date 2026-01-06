@@ -12,7 +12,7 @@
 #include <string.h>
 
 #ifndef CONFIG_USE_DMIC
-#include "sine.h"
+#include "song.h"
 #endif
 
 #define I2S_CODEC_TX DT_ALIAS(i2s_codec_tx)
