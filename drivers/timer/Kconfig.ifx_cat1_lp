@@ -27,3 +27,13 @@ config INFINEON_LP_TIMER_PDL
 	help
 	  This module implements a PDL based kernel device driver for the LowPower Timer
 	  and provides the standard "system clock driver" interfaces.
+config INFINEON_LP_TIMER
+	bool "Infineon Low Power Timer driver"
+	default y
+	depends on DT_HAS_INFINEON_LP_TIMER_WDT_ENABLED
+	depends on !USE_INFINEON_LEGACY_HAL
+	select USE_INFINEON_LPTIMER
+	select TICKLESS_CAPABLE
+	help
+	  This module implements a PDL based kernel device driver for the LowPower Timer
+	  and provides the standard "system clock driver" interfaces.

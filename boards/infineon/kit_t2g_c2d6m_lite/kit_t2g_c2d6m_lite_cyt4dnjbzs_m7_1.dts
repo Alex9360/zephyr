@@ -17,7 +17,7 @@
 	compatible = "infineon,kit_t2g_c2d6m_lite", "infineon,CYT4DN";
 
 	aliases {
-		uart-9 = &uart9;
+		uart-9 = &uart7;
 		led0 = &user_led0;
 		sw0 = &user_bt0;
 	};
@@ -27,8 +27,10 @@
 		zephyr,flash = &cm7_1_data;
 		zephyr,dtcm = &dtcm;
 		zephyr,itcm = &itcm;
-		zephyr,console = &uart9;
-		zephyr,shell-uart = &uart9;
+//		zephyr,console = &uart9;
+//		zephyr,shell-uart = &uart9;
+		zephyr,console = &uart7;
+		zephyr,shell-uart = &uart7;
 	};
 
 	leds {
@@ -50,7 +52,22 @@
 	};
 
 };
+uart7: &scb7 {
+        compatible = "infineon,cat1-uart-pdl";
+        status = "okay";
+        current-speed = <115200>;
+        clocks = <&clk_hf2>;
+        ifx,peri-group = <IFX_PERI_GRP_INST_SEL(1, 0)>;
+        ifx,peri-clk = <0x010F>;
+        ifx,peri-div = <0>; /* 8-bit divider */
+        ifx,peri-div-inst = <0>;
 
+        /* UART pins */
+        pinctrl-0 = <&p9_0_scb7_uart_rx &p9_1_scb7_uart_tx>;
+        pinctrl-names = "default";
+};
+
+#if 0
 uart9: &scb9 {
 	compatible = "infineon,cat1-uart-pdl";
 	status = "okay";
@@ -65,6 +82,7 @@ uart9: &scb9 {
 	pinctrl-0 = <&p29_0_scb9_uart_rx &p29_1_scb9_uart_tx>;
 	pinctrl-names = "default";
 };
+#endif
 
 &gpio_prt29 {
 	status = "okay";
@@ -72,4 +90,13 @@ uart9: &scb9 {
 
 &gpio_prt7 {
 	status = "okay";
+};
+
+&adc0 {
+       status = "okay";
+       clock-frequency = <26670000>;
+       ifx,peri-group = <IFX_PERI_GRP_INST_SEL(1, 0)>;
+       ifx,peri-clk = <0x0114>;
+       ifx,peri-div = <0>; /* 8-bit divider */
+       ifx,peri-div-inst = <2>;
 };

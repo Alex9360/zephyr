@@ -20,7 +20,8 @@
 	compatible = "infineon,kit_t2g_c2d6m_lite", "infineon,cyt4dn";
 
 	aliases {
-		uart-7 = &uart7;
+//		uart-7 = &uart7;
+		uart-7 = &uart9;
 		led0 = &user_led0;
 		pwm-led0 = &pwm_led0;
 		sw0 = &user_bt0;
@@ -31,8 +32,10 @@
 		zephyr,flash = &cm7_0_data;
 		zephyr,dtcm = &dtcm;
 		zephyr,itcm = &itcm;
-		zephyr,console = &uart7;
-		zephyr,shell-uart = &uart7;
+	//	zephyr,console = &uart7;
+	//	zephyr,shell-uart = &uart7;
+		zephyr,console = &uart9;
+		zephyr,shell-uart = &uart9;
 		zephyr,canbus = &can0;
 		zephyr,flash-controller = &flash_controller;
 	};
@@ -63,8 +66,30 @@
 			zephyr,code = <INPUT_KEY_0>;
 		};
 	};
+
+	power-states {
+		sleep: sleep {
+			compatible = "zephyr,power-state";
+			power-state-name = "suspend-to-idle";
+			min-residency-us = <1000000>;
+		};
+
+		deepsleep: deepsleep {
+			compatible = "zephyr,power-state";
+			power-state-name = "suspend-to-ram";
+			min-residency-us = <2000000>;
+			exit-latency-us = <20>;
+		};
+	};
+
+	cpus {
+		cpu@0 {
+			cpu-power-states = <&sleep &deepsleep>;
+		};
+	};
 };
 
+#if 0
 uart7: &scb7 {
 	compatible = "infineon,cat1-uart-pdl";
 	status = "okay";
@@ -78,6 +103,21 @@ uart7: &scb7 {
 	/* UART pins */
 	pinctrl-0 = <&p9_0_scb7_uart_rx &p9_1_scb7_uart_tx>;
 	pinctrl-names = "default";
+};
+#endif
+uart9: &scb9 {
+        compatible = "infineon,cat1-uart-pdl";
+        status = "okay";
+        current-speed = <115200>;
+        clocks = <&clk_hf2>;
+        ifx,peri-group = <IFX_PERI_GRP_INST_SEL(1, 0)>;
+        ifx,peri-clk = <0x0111>;
+        ifx,peri-div = <0>; /* 8-bit divider */
+        ifx,peri-div-inst = <1>;
+
+        /* UART pins */
+        pinctrl-0 = <&p29_0_scb9_uart_rx &p29_1_scb9_uart_tx>;
+        pinctrl-names = "default";
 };
 
 i2c11: &scb11 {
@@ -210,15 +250,15 @@ spi0: &scb0 {
 };
 
 &clk_hf7 {
-        status = "okay";
+        status = "disabled";
 };
 
 &clk_hf6 {
-        status = "okay";
+        status = "disabled";
 };
 
 &clk_hf5 {
-        status = "okay";
+        status = "disabled";
 };
 
 &gpio_prt11 {
