@@ -8,5 +8,6 @@ zephyr_include_directories(../common)
 
 # Add sections
 zephyr_linker_sources(NOINIT ../common/noinit.ld)
-
+zephyr_sources_ifdef(CONFIG_PM power.c)
+zephyr_sources_ifdef(CONFIG_CORTEX_M_SYSTICK_LPM_TIMER_HOOKS soc_lptimer.c)
 zephyr_include_directories(.)

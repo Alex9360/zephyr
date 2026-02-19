@@ -3007,7 +3007,7 @@
 			compatible = "infineon,lp-timer-wdt";
 			reg = <0x4026C000 0x80>;
 			system-interrupts = <17 3>;
-			status = "okay";
+			status = "disabled";
 		};
 	};
 };
