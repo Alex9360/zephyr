@@ -77,6 +77,12 @@ static struct mspm0_clk_cfg mspm0_mfpclk_cfg = {
 };
 #endif
 
+#if MSPM0_HFCLK_ENABLED
+static struct mspm0_clk_cfg mspm0_hfclk_cfg = {
+	.clk_freq = DT_PROP(DT_NODELABEL(hfclk), clock_frequency),
+};
+#endif
+
 #if MSPM0_SYSPLL_ENABLED
 /* basic checks of the devicetree to follow */
 #if (DT_NODE_HAS_PROP(DT_NODELABEL(syspll), clk2x_div) && \
@@ -141,6 +147,12 @@ static int clock_mspm0_get_rate(const struct device *dev,
 #if MSPM0_MFPCLK_ENABLED
 	case MSPM0_CLOCK_MFPCLK:
 		*rate = mspm0_mfpclk_cfg.clk_freq;
+		break;
+#endif
+
+#if MSPM0_HFCLK_ENABLED
+	case MSPM0_CLOCK_HFCLK:
+		*rate = mspm0_hfclk_cfg.clk_freq;
 		break;
 #endif
 
