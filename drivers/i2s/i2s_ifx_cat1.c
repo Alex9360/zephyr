@@ -1,5 +1,4 @@
-/*
- * Copyright (c) 2026 Linumiz
+/* Copyright (c) 2026 Linumiz
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -347,19 +346,30 @@ static void dma_tx_callback(const struct device *dma_dev, void *arg,
 	ARG_UNUSED(dma_dev);
 	ARG_UNUSED(channel);
 
-	k_mem_slab_free(stream->cfg.mem_slab, stream->mem_block);
-	stream->mem_block = NULL;
-
 	if (status < 0) {
 		LOG_ERR("TX DMA error %d", status);
+		if (stream->mem_block != NULL) {
+			k_mem_slab_free(stream->cfg.mem_slab, stream->mem_block);
+			stream->mem_block = NULL;
+		}
 		stream->state = I2S_STATE_ERROR;
 		return;
 	}
 
+	k_mem_slab_free(stream->cfg.mem_slab, stream->mem_block);
+	stream->mem_block = NULL;
+
 	if (stream->xfer_pending) {
-		/* FIFO trigger fired while DMA was running; serve it now */
+		/*
+		 * FIFO trigger fired while DMA was running.
+		 * start_dma_tx_transfer either starts a new DMA (queue had data)
+		 * or writes dummy samples (queue empty). Either way TX_TRIGGER
+		 * must be re-enabled so the next FIFO-empty event is caught.
+		 */
 		stream->xfer_pending = false;
 		(void)start_dma_tx_transfer(dev);
+		mask = Cy_I2S_GetInterruptMask(cfg->reg);
+		Cy_I2S_SetInterruptMask(cfg->reg, mask | CY_I2S_INTR_TX_TRIGGER);
 	}
 
 	if (data->tx_waiting_to_start) {
@@ -814,6 +824,7 @@ static int ifx_i2s_trigger(const struct device *dev, enum i2s_dir dir,
 				break;
 			}
 			tx->last_block = true;
+			tx->drain      = true; /* ISR TX_UNDERFLOW checks both */
 			tx->state      = I2S_STATE_STOPPING;
 		}
 		if (do_rx) {
@@ -935,7 +946,7 @@ static int ifx_i2s_init(const struct device *dev)
 	data->tx_waiting_to_start = false;
 
 	cfg->irq_config(dev);
-
+	Cy_I2S_SetInterruptMask(cfg->reg, 0);
 	LOG_DBG("I2S %s initialized", dev->name);
 	return 0;
 }
@@ -967,8 +978,8 @@ static DEVICE_API(i2s, ifx_i2s_api) = {
 	static void ifx_i2s_irq_config_##n(const struct device *dev)          \
 	{                                                                     \
 		enable_sys_int(DT_INST_PROP_BY_IDX(n, system_interrupts, 0),  \
-			    DT_INST_PROP_BY_IDX(n, system_interrupts),        \
-			    i2s_tx_isr,                                       \
+			    DT_INST_PROP_BY_IDX(n, system_interrupts, 1),     \
+			    (void (*)(const void *)) i2s_isr,                 \
 			    dev);                                             \
 	}                                                                     \
                                                                               \
