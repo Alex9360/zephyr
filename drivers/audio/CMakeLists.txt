@@ -25,4 +25,5 @@ zephyr_library_sources_ifdef(CONFIG_AUDIO_TAS2563 tas2563.c)
 zephyr_library_sources_ifdef(CONFIG_AUDIO_TAS6422DAC tas6422dac.c)
 zephyr_library_sources_ifdef(CONFIG_AUDIO_TLV320AIC3110 tlv320aic3110.c)
 zephyr_library_sources_ifdef(CONFIG_AUDIO_TLV320DAC tlv320dac310x.c)
+zephyr_library_sources_ifdef(CONFIG_AUDIO_TLV320AIC26 tlv320aic26.c)
 # zephyr-keep-sorted-stop

@@ -1,0 +1,13 @@
+cription: |
+  Texas Instruments TLV320AIC26 Low Power Stereo Audio Codec.
+  Control interface: SPI. Audio interface: I2S.
+
+compatible: "ti,tlv320aic26"
+
+include: [spi-device.yaml]
+
+properties:
+  mclk-frequency:
+    type: int
+    required: true
+    description: Master clock frequency in Hz applied to the MCLK pin
