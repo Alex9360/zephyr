@@ -1,40 +1,13 @@
-/* Copyright (c) 2026 Linumiz
- * SPDX-License-Identifier: Apache-2.0
- */
-
 /*
- * Infineon CAT1 AUDIOSS I2S driver - DMA mode.
- *
- * TRM ref: 002-24402 Rev.*H Ch.34 / Ch.18
- *
- * DMA flow (ISR-driven 1D SW-triggered burst, mirrors TDM reference driver):
- *   TX: FIFO trigger ISR -> start_dma_tx_transfer -> DMA dumps full block
- *       into FIFO -> dma_tx_callback -> free block -> re-enable FIFO trigger IRQ
- *   RX: FIFO trigger ISR -> start_dma_rx_transfer -> DMA drains FIFO to
- *       mem_slab block -> dma_rx_callback -> push to queue -> re-enable trigger IRQ
- *
- * Single IRQ per instance (audioss_x_interrupt_i2s_IRQn).
- *
- * Clock: SCK = CLK_HFx / (pdl_clkDiv * 8)
- *   pdl_clkDiv = CLK_HFx / (frame_clk_freq * 2 * word_size * 8)
- *   Valid: 1..64
- *
- * DMA block_size = element count (bytes / data_size), NOT bytes.
- * AUDIOSS I2S FIFO is always 32-bit wide. DW DMA peripheral side is forced to
- * WORD (srcTransferSize/dstTransferSize = CY_DMA_TRANSFER_SIZE_WORD). Memory
- * side uses data_size: 1/2/4 bytes, matching the audio sample packing.
- *
- * FIFO trigger levels (computed from block_size in configure):
- *   TX trigger_level = block_samples / 2  -> fires when FIFO half-empty
- *   RX trigger_level = block_samples - 1  -> fires when FIFO has >= block_samples
- *   Max TX block: 170 samples (so trigger_level + block_size < 256)
- *   Max RX block: 255 samples
+ * Copyright (c) 2026 Linumiz
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #define DT_DRV_COMPAT infineon_cat1_i2s
 
 #include <zephyr/drivers/i2s.h>
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/drivers/clock_control.h>
 #include <zephyr/drivers/dma.h>
 #include <zephyr/irq.h>
 #include <zephyr/logging/log.h>
@@ -138,16 +111,17 @@ static int compute_clk_div(uint32_t clk_hz, const struct i2s_config *cfg,
 {
 	/* SCK = frame_clk_freq * channels * word_size */
 	uint32_t sck = cfg->frame_clk_freq * (uint32_t)cfg->channels *
-		       (uint32_t)cfg->word_size;
+		       32;
 	uint32_t div;
-
+	uint32_t clock;
+	clock_control_get_rate(DEVICE_DT_GET(DT_NODELABEL(clk_hf5)), NULL, &clock);
 	if (sck == 0U) {
 		return -EINVAL;
 	}
-	div = clk_hz / (sck * 8U);
+	div = clock / (sck * 8U);
 	if (div < 1U || div > 64U) {
 		LOG_ERR("Cannot achieve %uHz: CLK_HFx=%u div=%u (valid: 1..64)",
-			cfg->frame_clk_freq, clk_hz, div);
+			cfg->frame_clk_freq, clock, div);
 		return -EINVAL;
 	}
 	*out = (uint8_t)div;
@@ -204,6 +178,7 @@ static int start_dma_tx_transfer(const struct device *dev)
 	if (ret < 0) {
 		k_mem_slab_free(stream->cfg.mem_slab, stream->mem_block);
 		stream->mem_block = NULL;
+		return ret;
 	}
 
 	return ret;
@@ -258,11 +233,6 @@ static int i2s_tx_stream_start(const struct device *dev)
 	struct ifx_i2s_data *data = dev->data;
 	int ret;
 
-	/*
-	 * Pre-load FIFO with first block before enabling TX to avoid underflow
-	 * at startup. DMA callback fires after first block is in FIFO, then
-	 * enables TX and the TX_TRIGGER interrupt.
-	 */
 	data->tx_waiting_to_start = true;
 
 	ret = start_dma_tx_transfer(dev);
@@ -280,8 +250,10 @@ static int i2s_rx_stream_start(const struct device *dev)
 
 	mask = Cy_I2S_GetInterruptMask(cfg->reg);
 	Cy_I2S_SetInterruptMask(cfg->reg,
-		mask | CY_I2S_INTR_RX_TRIGGER | INTR_RX_ERRORS);
-
+				mask | CY_I2S_INTR_RX_TRIGGER | INTR_RX_ERRORS);
+#if 0
+	 Cy_SysInt_EnableSystemInt(55);
+#endif
 	Cy_I2S_EnableRx(cfg->reg);
 	return 0;
 }
@@ -297,6 +269,9 @@ static void i2s_tx_stream_disable(const struct device *dev, bool drop)
 	Cy_I2S_SetInterruptMask(cfg->reg, mask & ~CY_I2S_INTR_TX_TRIGGER);
 
 	Cy_I2S_DisableTx(cfg->reg);
+#if 0
+	 Cy_SysInt_DisableSystemInt(55);
+#endif
 	dma_stop(data->dma_tx.dev_dma, data->dma_tx.channel_num);
 
 	if (stream->mem_block != NULL) {
@@ -320,6 +295,9 @@ static void i2s_rx_stream_disable(const struct device *dev, bool drop)
 	Cy_I2S_SetInterruptMask(cfg->reg, mask & ~CY_I2S_INTR_RX_TRIGGER);
 
 	Cy_I2S_DisableRx(cfg->reg);
+#if 0
+	 Cy_SysInt_DisableSystemInt(55);
+#endif
 	dma_stop(data->dma_rx.dev_dma, data->dma_rx.channel_num);
 
 	if (stream->mem_block != NULL) {
@@ -333,7 +311,7 @@ static void i2s_rx_stream_disable(const struct device *dev, bool drop)
 	}
 }
 
-
+#if 0
 static void dma_tx_callback(const struct device *dma_dev, void *arg,
 			     uint32_t channel, int status)
 {
@@ -360,12 +338,6 @@ static void dma_tx_callback(const struct device *dma_dev, void *arg,
 	stream->mem_block = NULL;
 
 	if (stream->xfer_pending) {
-		/*
-		 * FIFO trigger fired while DMA was running.
-		 * start_dma_tx_transfer either starts a new DMA (queue had data)
-		 * or writes dummy samples (queue empty). Either way TX_TRIGGER
-		 * must be re-enabled so the next FIFO-empty event is caught.
-		 */
 		stream->xfer_pending = false;
 		(void)start_dma_tx_transfer(dev);
 		mask = Cy_I2S_GetInterruptMask(cfg->reg);
@@ -373,17 +345,64 @@ static void dma_tx_callback(const struct device *dma_dev, void *arg,
 	}
 
 	if (data->tx_waiting_to_start) {
-		/*
-		 * First block is now in the FIFO. Enable TX and its trigger IRQ.
-		 * From here on, tx_fifo_trigger_handler feeds subsequent blocks.
-		 */
 		data->tx_waiting_to_start = false;
 		mask = Cy_I2S_GetInterruptMask(cfg->reg);
 		Cy_I2S_SetInterruptMask(cfg->reg,
-			mask | CY_I2S_INTR_TX_TRIGGER | INTR_TX_ERRORS);
+					mask | CY_I2S_INTR_TX_TRIGGER | INTR_TX_ERRORS);
+#if 0
+		Cy_SysInt_EnableSystemInt(55);
+#endif
 		Cy_I2S_EnableTx(cfg->reg);
 	}
 }
+#endif
+#if 1
+static void dma_tx_callback(const struct device *dma_dev, void *arg,
+                             uint32_t channel, int status)
+{
+    const struct device *dev = arg;
+    struct ifx_i2s_data *data = dev->data;
+    const struct ifx_i2s_config *cfg = dev->config;
+    struct i2s_stream *stream = &data->tx;
+    uint32_t mask;
+
+    ARG_UNUSED(dma_dev);
+    ARG_UNUSED(channel);
+
+    if (status < 0) {
+        LOG_ERR("TX DMA error %d", status);
+        if (stream->mem_block != NULL) {
+            k_mem_slab_free(stream->cfg.mem_slab, stream->mem_block);
+            stream->mem_block = NULL;
+        }
+        stream->state = I2S_STATE_ERROR;
+        return;
+    }
+
+    k_mem_slab_free(stream->cfg.mem_slab, stream->mem_block);
+    stream->mem_block = NULL;
+
+    /* ALWAYS clear and re-enable TX_TRIGGER (matches TDM driver) */
+    Cy_I2S_ClearInterrupt(cfg->reg, CY_I2S_INTR_TX_TRIGGER);
+    mask = Cy_I2S_GetInterruptMask(cfg->reg);
+    Cy_I2S_SetInterruptMask(cfg->reg, mask | CY_I2S_INTR_TX_TRIGGER);
+
+    if (stream->xfer_pending) {
+        stream->xfer_pending = false;
+        (void)start_dma_tx_transfer(dev);
+    }
+
+    if (data->tx_waiting_to_start) {
+        data->tx_waiting_to_start = false;
+        Cy_I2S_ClearInterrupt(cfg->reg,
+                    CY_I2S_INTR_TX_TRIGGER | INTR_TX_ERRORS);
+        mask = Cy_I2S_GetInterruptMask(cfg->reg);
+        Cy_I2S_SetInterruptMask(cfg->reg,
+                    mask | CY_I2S_INTR_TX_TRIGGER | INTR_TX_ERRORS);
+        Cy_I2S_EnableTx(cfg->reg);
+    }
+}
+#endif
 
 static void dma_rx_callback(const struct device *dma_dev, void *arg,
 			     uint32_t channel, int status)
@@ -424,14 +443,11 @@ static void dma_rx_callback(const struct device *dma_dev, void *arg,
 	}
 
 	if (stream->xfer_pending) {
-		/* FIFO trigger fired while DMA was draining; serve it now */
 		stream->xfer_pending = false;
-		/* start_dma_rx_transfer masks RX_TRIGGER internally */
 		(void)start_dma_rx_transfer(dev);
 		return;
 	}
 
-	/* Re-enable RX_TRIGGER; next DMA starts when FIFO fills again */
 	mask = Cy_I2S_GetInterruptMask(cfg->reg);
 	Cy_I2S_SetInterruptMask(cfg->reg, mask | CY_I2S_INTR_RX_TRIGGER);
 }
@@ -447,14 +463,11 @@ static void tx_fifo_trigger_handler(const struct device *dev)
 	switch (stream->state) {
 	case I2S_STATE_RUNNING:
 	case I2S_STATE_STOPPING:
-		/* Mask TX_TRIGGER while DMA runs */
 		mask = Cy_I2S_GetInterruptMask(cfg->reg);
 		Cy_I2S_SetInterruptMask(cfg->reg, mask & ~CY_I2S_INTR_TX_TRIGGER);
 
 		if (stream->mem_block == NULL) {
 			if (stream->last_block) {
-				/* All blocks sent; dummy samples to hold TX alive
-				 * until TX_UNDERFLOW ISR signals completion */
 				for (int i = 0; i < 4; i++) {
 					Cy_I2S_WriteTxData(cfg->reg, 0U);
 				}
@@ -463,7 +476,6 @@ static void tx_fifo_trigger_handler(const struct device *dev)
 				(void)start_dma_tx_transfer(dev);
 			}
 		} else {
-			/* Previous DMA still running */
 			stream->xfer_pending = true;
 		}
 		break;
@@ -509,7 +521,7 @@ static void i2s_isr(const struct device *dev)
 	const struct ifx_i2s_config *cfg = dev->config;
 	struct ifx_i2s_data *data = dev->data;
 	uint32_t intr;
-
+//	printf("fifo value = %d\n", cfg->reg->TX_FIFO_STATUS);
 	intr = Cy_I2S_GetInterruptStatusMasked(cfg->reg);
 
 	if (intr & CY_I2S_INTR_TX_OVERFLOW) {
@@ -518,7 +530,6 @@ static void i2s_isr(const struct device *dev)
 	}
 
 	if (intr & CY_I2S_INTR_TX_UNDERFLOW) {
-		/* End of DRAIN: all data sent and FIFO drained */
 		i2s_tx_stream_disable(dev, false);
 		if (data->tx.last_block && data->tx.drain) {
 			data->tx.state = I2S_STATE_READY;
@@ -543,7 +554,6 @@ static void i2s_isr(const struct device *dev)
 
 	if (intr & CY_I2S_INTR_RX_TRIGGER) {
 		if (data->rx.state == I2S_STATE_STOPPING) {
-			/* Stop HW; let one final DMA drain the remaining FIFO */
 			Cy_I2S_DisableRx(cfg->reg);
 		}
 		rx_fifo_trigger_handler(dev);
@@ -611,7 +621,6 @@ static int ifx_i2s_configure(const struct device *dev, enum i2s_dir dir,
 		return -ENOTSUP;
 	}
 
-	/* bit clock and frame clock must both be master or both slave */
 	if (!!(i2s_cfg->options & I2S_OPT_BIT_CLK_SLAVE) !=
 	    !!(i2s_cfg->options & I2S_OPT_FRAME_CLK_SLAVE)) {
 		LOG_ERR("Bit and frame clock must be same master/slave");
@@ -628,7 +637,7 @@ static int ifx_i2s_configure(const struct device *dev, enum i2s_dir dir,
 	dma_data_bytes = word_size_to_dma_bytes(i2s_cfg->word_size);
 	block_samples  = (uint32_t)i2s_cfg->block_size / dma_data_bytes;
 
-	if (is_tx && block_samples > TX_MAX_BLOCK_SAMPLES) {
+	if (is_tx && (block_samples > TX_MAX_BLOCK_SAMPLES)) {
 		LOG_ERR("TX block too large: %u samples (max %u)",
 			block_samples, TX_MAX_BLOCK_SAMPLES);
 		return -EINVAL;
@@ -645,12 +654,12 @@ static int ifx_i2s_configure(const struct device *dev, enum i2s_dir dir,
 			return ret;
 		}
 	} else {
-		/* Slave: internal MCLK_SOC must still = SCK * 8 per TRM */
 		pdl_clk_div = data->pdl_cfg.clkDiv ? data->pdl_cfg.clkDiv : 2U;
 	}
 
 	data->pdl_cfg.clkDiv = pdl_clk_div;
 	data->pdl_cfg.extClk = false;
+	data->pdl_cfg.mclkEn = true;
 
 	if (is_tx) {
 		data->pdl_cfg.txEnabled          = true;
@@ -664,7 +673,7 @@ static int ifx_i2s_configure(const struct device *dev, enum i2s_dir dir,
 		data->pdl_cfg.txSckoInversion    = !!(i2s_cfg->format & I2S_FMT_BIT_CLK_INV);
 		data->pdl_cfg.txSckiInversion    = !!(i2s_cfg->format & I2S_FMT_BIT_CLK_INV);
 		data->pdl_cfg.txChannels         = 2U;
-		data->pdl_cfg.txChannelLength    = word_len;
+		data->pdl_cfg.txChannelLength    = CY_I2S_LEN32;
 		data->pdl_cfg.txWordLength       = word_len;
 		data->pdl_cfg.txOverheadValue    = CY_I2S_OVHDATA_ZERO;
 		data->pdl_cfg.txFifoTriggerLevel = (uint8_t)(block_samples / 2U);
@@ -689,7 +698,7 @@ static int ifx_i2s_configure(const struct device *dev, enum i2s_dir dir,
 		data->pdl_cfg.rxSckoInversion    = !!(i2s_cfg->format & I2S_FMT_BIT_CLK_INV);
 		data->pdl_cfg.rxSckiInversion    = !!(i2s_cfg->format & I2S_FMT_BIT_CLK_INV);
 		data->pdl_cfg.rxChannels         = 2U;
-		data->pdl_cfg.rxChannelLength    = word_len;
+		data->pdl_cfg.rxChannelLength    = CY_I2S_LEN32;
 		data->pdl_cfg.rxWordLength       = word_len;
 		data->pdl_cfg.rxSignExtension    = false;
 		data->pdl_cfg.rxFifoTriggerLevel = (uint8_t)(block_samples - 1U);
@@ -705,11 +714,12 @@ static int ifx_i2s_configure(const struct device *dev, enum i2s_dir dir,
 		LOG_ERR("Cy_I2S_Init failed");
 		return -EIO;
 	}
-
-	/*
-	 * Cy_I2S_Init() sets INTR_MASK = 0. Re-enable error interrupts only.
-	 * TX/RX trigger bits are enabled at stream start time.
-	 */
+#if 1
+	REG_I2S_CLOCK_CTL(cfg->reg) =
+    		_VAL2FLD(I2S_CLOCK_CTL_CLOCK_DIV, pdl_clk_div - 1U) |
+   		_VAL2FLD(I2S_CLOCK_CTL_MCLK_DIV, 0U) |   /* divide by 1 */
+    		_BOOL2FLD(I2S_CLOCK_CTL_MCLK_EN, true);
+#endif
 	Cy_I2S_SetInterruptMask(cfg->reg, INTR_TX_ERRORS | INTR_RX_ERRORS);
 
 	if (is_tx) {
@@ -760,6 +770,7 @@ static int ifx_i2s_write(const struct device *dev, void *mem_block, size_t size)
 {
 	struct ifx_i2s_data *data = dev->data;
 	struct i2s_stream *stream = &data->tx;
+	int ret;
 	struct queue_item item = {
 		.buffer = mem_block,
 		.size   = size,
@@ -769,7 +780,11 @@ static int ifx_i2s_write(const struct device *dev, void *mem_block, size_t size)
 		return -EIO;
 	}
 
-	return k_msgq_put(&stream->queue, &item, SYS_TIMEOUT_MS(stream->cfg.timeout));
+	ret = k_msgq_put(&stream->queue, &item, SYS_TIMEOUT_MS(stream->cfg.timeout));
+	if (ret) {
+		LOG_ERR("k_msgq_put failed %d", ret);
+	}
+	return ret;
 }
 
 static int ifx_i2s_trigger(const struct device *dev, enum i2s_dir dir,
@@ -847,7 +862,6 @@ static int ifx_i2s_trigger(const struct device *dev, enum i2s_dir dir,
 			tx->state = I2S_STATE_STOPPING;
 		}
 		if (do_rx) {
-			/* DRAIN == STOP for RX */
 			if (rx->state != I2S_STATE_RUNNING) {
 				ret = -EIO;
 				break;
@@ -926,7 +940,6 @@ static int ifx_i2s_init(const struct device *dev)
 	k_msgq_init(&data->rx.queue, (char *)data->rx_queue_buf,
 		    sizeof(struct queue_item), RX_QUEUE_SIZE);
 
-	/* Fixed addresses for DMA descriptors; source/dest updated per block */
 	data->dma_tx.blk_cfg.dest_address    = (uint32_t)(&cfg->reg->TX_FIFO_WR);
 	data->dma_tx.blk_cfg.source_addr_adj = DMA_ADDR_ADJ_INCREMENT;
 	data->dma_tx.blk_cfg.dest_addr_adj   = DMA_ADDR_ADJ_NO_CHANGE;
@@ -992,7 +1005,6 @@ static DEVICE_API(i2s, ifx_i2s_api) = {
 	static const struct ifx_i2s_config i2s_config_##n = {                \
 		.reg        = (I2S_Type *)DT_INST_REG_ADDR(n),               \
 		.pcfg       = PINCTRL_DT_INST_DEV_CONFIG_GET(n),             \
-		.clk_hz     = DT_INST_PROP(n, clock_frequency),              \
 		.irq_config = ifx_i2s_irq_config_##n,                        \
 	};                                                                   \
                                                                              \

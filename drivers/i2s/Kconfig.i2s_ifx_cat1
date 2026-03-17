@@ -2,13 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-config INFINEON_I2S_CAT1
+config I2S_INFINEON_CAT1
 	bool "Infineon CAT1 AUDIOSS I2S driver"
 	default y
 	depends on DT_HAS_INFINEON_CAT1_I2S_ENABLED
 	select  USE_INFINEON_I2S
 	select DMA 
-	select PINCTRL 
 	help
 	  ISR-driven DMA I2S driver for Infineon TRAVEO T2G AUDIOSS block.
 	  Supports I2S and Left-Justified formats, stereo only, 8/16/18/20/24/32-bit.
@@ -16,9 +15,9 @@ config INFINEON_I2S_CAT1
 config I2S_IFX_CAT1_TX_QUEUE_SIZE
 	int "TX block queue depth"
 	default 4
-	depends on INFINEON_I2S_CAT1
+	depends on I2S_INFINEON_CAT1
 
 config I2S_IFX_CAT1_RX_QUEUE_SIZE
 	int "RX block queue depth"
 	default 4
-	depends on INFINEON_I2S_CAT1
+	depends on I2S_INFINEON_CAT1
