@@ -730,6 +730,8 @@ static int aic26_write(const struct device *dev, uint8_t page,
 	const struct tlv320aic26_config *cfg = dev->config;
 	uint16_t cmd = AIC26_BUILD_CMD(AIC26_CMD_WRITE, page, addr);
 	uint8_t buf[4];
+	int ret;
+
 
 	buf[0] = (uint8_t)(cmd >> 8);
 	buf[1] = (uint8_t)(cmd & 0xFF);
@@ -739,7 +741,7 @@ static int aic26_write(const struct device *dev, uint8_t page,
 	const struct spi_buf tx = { .buf = buf, .len = sizeof(buf) };
 	const struct spi_buf_set tx_set = { .buffers = &tx, .count = 1 };
 
-	int ret = spi_write_dt(&cfg->spi, &tx_set);
+	ret = spi_write_dt(&cfg->spi, &tx_set);
 
 	if (ret < 0) {
 		LOG_ERR("SPI write fail P%u R0x%02x: %d", page, addr, ret);
@@ -754,6 +756,7 @@ static int aic26_read(const struct device *dev, uint8_t page,
 	uint16_t cmd = AIC26_BUILD_CMD(AIC26_CMD_READ, page, addr);
 	uint8_t tx_buf[4] = { 0 };
 	uint8_t rx_buf[4] = { 0 };
+	int ret;
 
 	tx_buf[0] = (uint8_t)(cmd >> 8);
 	tx_buf[1] = (uint8_t)(cmd & 0xFF);
@@ -763,7 +766,7 @@ static int aic26_read(const struct device *dev, uint8_t page,
 	const struct spi_buf rx = { .buf = rx_buf, .len = sizeof(rx_buf) };
 	const struct spi_buf_set rx_set = { .buffers = &rx, .count = 1 };
 
-	int ret = spi_transceive_dt(&cfg->spi, &tx_set, &rx_set);
+	ret = spi_transceive_dt(&cfg->spi, &tx_set, &rx_set);
 
 	if (ret < 0) {
 		LOG_ERR("SPI read fail P%u R0x%02x: %d", page, addr, ret);
@@ -811,6 +814,12 @@ static int aic26_setup_reference(const struct device *dev)
 static int aic26_calc_pll(uint32_t mclk, uint32_t fs, struct pll_cfg *out)
 {
 	static const uint32_t fsref_list[] = { 48000, 44100 };
+	uint32_t div_x2;
+	uint32_t fsref;
+	uint32_t fsref_x2;
+	uint32_t denom;
+	uint32_t q;
+	int8_t fs_div;
 
 	memset(out, 0, sizeof(*out));
 
@@ -820,15 +829,13 @@ static int aic26_calc_pll(uint32_t mclk, uint32_t fs, struct pll_cfg *out)
 	}
 
 	for (int fi = 0; fi < ARRAY_SIZE(fsref_list); fi++) {
-		uint32_t fsref = fsref_list[fi];
-		uint32_t fsref_x2 = fsref * 2;
+		fsref = fsref_list[fi];
+		fsref_x2 = fsref * 2;
 
 		if (fsref_x2 % fs != 0) {
 			continue;
 		}
-		uint32_t div_x2 = fsref_x2 / fs;
-
-		int8_t fs_div;
+		div_x2 = fsref_x2 / fs;
 
 		switch (div_x2) {
 		case 2:
@@ -863,10 +870,10 @@ static int aic26_calc_pll(uint32_t mclk, uint32_t fs, struct pll_cfg *out)
 		out->fsref_44k1 = (fi == 1);
 
 		/* Try PLL-free path first */
-		uint32_t denom = 128U * fsref;
+		denom = 128U * fsref;
 
 		if ((mclk % denom) == 0) {
-			uint32_t q = mclk / denom;
+			q = mclk / denom;
 
 			if (q >= 2 && q <= 17) {
 				out->pll_en = false;
@@ -900,12 +907,10 @@ static int aic26_calc_pll(uint32_t mclk, uint32_t fs, struct pll_cfg *out)
 				}
 			}
 
-			/* Must divide evenly */
 			if ((uint64_t)mclk * k10k != num) {
 				continue;
 			}
 
-			/* Validate PLL VCO: 80 MHz <= MCLK*K/P <= 110 MHz */
 			uint64_t vco_x10k = (uint64_t)mclk * k10k / p;
 			uint64_t vco_hz = vco_x10k / 10000;
 
@@ -930,9 +935,11 @@ static int aic26_set_pll(const struct device *dev, const struct pll_cfg *pll)
 {
 	uint16_t pll1, pll2;
 	int ret;
+	uint8_t p_enc;
+	uint8_t q_enc;
 
 	if (pll->pll_en) {
-		uint8_t p_enc = (pll->p == 8) ? 0 : pll->p;
+		p_enc = (pll->p == 8) ? 0 : pll->p;
 
 		pll1 = AIC26_PLLSEL_BIT |
 		       ((p_enc << AIC26_PVAL_SHIFT) & AIC26_PVAL_MASK) |
@@ -940,7 +947,6 @@ static int aic26_set_pll(const struct device *dev, const struct pll_cfg *pll)
 		pll2 = ((uint16_t)pll->d << AIC26_DVAL_SHIFT) &
 		       AIC26_DVAL_MASK;
 	} else {
-		uint8_t q_enc;
 
 		if (pll->q == 16) {
 			q_enc = 0;
@@ -980,6 +986,8 @@ static int aic26_configure(const struct device *dev,
 	uint16_t reg;
 	uint8_t wlen;
 	uint8_t datfm;
+	bool bclk_slave;
+	bool fclk_slave;
 	bool codec_master;
 	int ret;
 
@@ -1026,9 +1034,9 @@ static int aic26_configure(const struct device *dev,
 		return -EINVAL;
 	}
 
-	bool bclk_slave = (cfg->dai_cfg.i2s.options &
+	bclk_slave = (cfg->dai_cfg.i2s.options &
 			   I2S_OPT_BIT_CLK_SLAVE) != 0;
-	bool fclk_slave = (cfg->dai_cfg.i2s.options &
+	fclk_slave = (cfg->dai_cfg.i2s.options &
 			   I2S_OPT_FRAME_CLK_SLAVE) != 0;
 
 	if (bclk_slave != fclk_slave) {
@@ -1036,7 +1044,7 @@ static int aic26_configure(const struct device *dev,
 		return -EINVAL;
 	}
 
-	codec_master = bclk_slave;
+	codec_master = !bclk_slave;
 
 	ret = aic26_calc_pll(dev_cfg->mclk_freq,
 			     cfg->dai_cfg.i2s.frame_clk_freq, &pll);
@@ -1102,6 +1110,8 @@ static void aic26_start_output(const struct device *dev)
 	struct tlv320aic26_data *data = dev->data;
 	uint16_t reg;
 	int ret;
+	int polls;
+	bool ready = false;
 
 	if (!data->configured) {
 		LOG_ERR("Not configured");
@@ -1118,8 +1128,7 @@ static void aic26_start_output(const struct device *dev)
 	}
 
 	/* Poll DAPWDF - clears when DAC is powered up */
-	int polls = AIC26_DAC_TIMEOUT_MS / AIC26_DAC_POLL_MS;
-	bool ready = false;
+	polls = AIC26_DAC_TIMEOUT_MS / AIC26_DAC_POLL_MS;
 
 	for (int i = 0; i < polls; i++) {
 		k_msleep(AIC26_DAC_POLL_MS);
@@ -1137,7 +1146,7 @@ static void aic26_start_output(const struct device *dev)
 	}
 
 	if (!ready) {
-		LOG_WRN("DAC power-up timeout (reg=0x%04x)", reg);
+		LOG_INF("DAC power-up timeout (reg=0x%04x)", reg);
 	}
 
 	/* Unmute both channels at 0 dB */
@@ -1182,11 +1191,13 @@ static int aic26_set_property(const struct device *dev,
 {
 	uint16_t reg;
 	int ret;
+	int db;
+	uint8_t atten;
 
 	switch (property) {
 	case AUDIO_PROPERTY_OUTPUT_VOLUME: {
-		int db = CLAMP(val.vol, -63, 0);
-		uint8_t atten = (uint8_t)(-db * 2);
+		db = CLAMP(val.vol, -63, 0);
+		atten = (uint8_t)(-db * 2);
 
 		if (atten > 0x7F) {
 			atten = 0x7F;
