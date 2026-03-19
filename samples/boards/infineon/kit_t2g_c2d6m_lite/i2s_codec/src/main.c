@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2026 Linumiz
  */
@@ -17,7 +18,7 @@
 #define NUMBER_OF_CHANNELS 2U
 
 /* Keep this small (your i2s_infineon driver was failing with big blocks) */
-#define BLOCK_SIZE         168U
+#define BLOCK_SIZE         320U
 
 #define TIMEOUT_MS         2000U
 
@@ -36,6 +37,7 @@ static int i2s_send_block_retry(const struct device *i2s_dev, void *mem_block, s
             /* TX queue full -> let ISR/DMA consume and retry */
             k_msleep(1);
         }
+//	printf("in a loop\n");
     } while (ret == -EAGAIN);
 
     return ret;
@@ -50,7 +52,8 @@ int main(void)
 #if 1
     const struct device *const codec_dev = DEVICE_DT_GET(DT_NODELABEL(audio_codec));
     struct audio_codec_cfg audio_cfg = {0};
-    const struct device *const i2c_dev  = DEVICE_DT_GET(DT_NODELABEL(scb11));
+#if 0
+    const struct device *const i2c_dev  = DEVICE_DT_GET(DT_NODELABEL(scb8));
     if (!device_is_ready(i2c_dev)) {
         printk("ERROR: I2C device not ready!\n");
         return -1;
@@ -61,7 +64,7 @@ int main(void)
         printk("ERROR: Failed to configure I2C (err %d)\n", ret);
         return -1;
     }
-
+#endif
     if (!device_is_ready(i2s_dev)) {
         printk("ERROR: %s not ready\n", i2s_dev->name);
         return -1;
@@ -134,20 +137,19 @@ int main(void)
 
         ret = i2s_send_block_retry(i2s_dev, (void *)&buf[off], BLOCK_SIZE);
         if (ret < 0) {
-            printk("ERROR: prime i2s_buf_write failed: %d\n", ret);
+            printf("ERROR: prime i2s_buf_write failed: %d\n", ret);
             return ret;
         }
-
         off += BLOCK_SIZE;
     }
 
     ret = i2s_trigger(i2s_dev, I2S_DIR_TX, I2S_TRIGGER_START);
     if (ret < 0) {
-        printk("ERROR: I2S_TRIGGER_START failed: %d\n", ret);
+        printf("ERROR: I2S_TRIGGER_START failed: %d\n", ret);
         return ret;
     }
 
-    printk("Sine playback started (%u Hz, %u-bit, %u ch)\n",
+    printf("Sine playback started (%u Hz, %u-bit, %u ch)\n",
            SAMPLE_FREQUENCY, SAMPLE_BIT_WIDTH, NUMBER_OF_CHANNELS);
     /* Continuous streaming loop */
     while (1) {
@@ -156,10 +158,11 @@ int main(void)
         }
         ret = i2s_send_block_retry(i2s_dev, (void *)&buf[off], BLOCK_SIZE);
         if (ret < 0) {
-            printk("ERROR: i2s_buf_write failed: %d\n", ret);
+            printf("ERROR: i2s_buf_write failed: %d\n", ret);
             break;
         }
         off += BLOCK_SIZE;
+//	printf("tx ted\n");
     }
     /* If you ever exit, stop TX cleanly */
     (void)i2s_trigger(i2s_dev, I2S_DIR_TX, I2S_TRIGGER_STOP);
