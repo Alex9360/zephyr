@@ -482,7 +482,7 @@
 			status = "disabled";
 		};
 		scb8: scb@40680000 {
-			compatible = "infineon,cat1-scb";
+			compatible = "infineon,cat1-scb-pdl";
 			reg = <0x40680000 0xfd0>;
 			system-interrupts = <120 6>;
 			status = "disabled";
@@ -2187,10 +2187,10 @@
 
 		dma0: dw@40280000 {
 			#dma-cells = <1>;
-			compatible = "infineon,cat1-dma";
+			compatible = "infineon,cat1-dma-pdl";
 			reg = <0x40280000 0x10000>;
 			dma-channels = <143>;
-			system-interrupts = <227 6>, /* CH0 */
+			interrupts = <227 6>, /* CH0 */
 								<228 6>, /* CH1 */
 								<229 6>, /* CH2 */
 								<230 6>, /* CH3 */
@@ -2337,10 +2337,10 @@
 		};
 		dma1: dw@40290000 {
 			#dma-cells = <1>;
-			compatible = "infineon,cat1-dma";
+			compatible = "infineon,cat1-dma-pdl";
 			reg = <0x40290000 0x10000>;
 			dma-channels = <65>;
-			system-interrupts = <370 6>, /* CH0 */
+			interrupts = <370 6>, /* CH0 */
 								<371 6>, /* CH1 */
 								<372 6>, /* CH2 */
 								<373 6>, /* CH3 */
@@ -2553,8 +2553,7 @@
                         #size-cells = <0>;
                         compatible = "infineon,cat1-i2s";
                         reg = <0x40800000 0x1000>;
-                        system-interrupts = <564 4>,
-			clock-frequency = <49152000>,
+                        system-interrupts = <564 4>;
                         dmas = <&dma1 55>, <&dma1 56>;
                         dma-names = "tx", "rx";
                         status = "disabled";
@@ -2565,8 +2564,7 @@
                         #size-cells = <0>;
                         compatible = "infineon,cat1-i2s";
                         reg = <0x40801000 0x1000>;
-                        system-interrupts = <565 4>,
-			clock-frequency = <49152000>,
+                        system-interrupts = <565 4>;
                         dmas = <&dma1 57>, <&dma1 58>;
                         dma-names = "tx", "rx";
                         status = "disabled";
@@ -2577,8 +2575,7 @@
                         #size-cells = <0>;
                         compatible = "infineon,cat1-i2s";
                         reg = <0x40802000 0x1000>;
-                        system-interrupts = <566 4>,
-			clock-frequency = <49152000>,
+                        system-interrupts = <566 4>;
                         dmas = <&dma1 59>, <&dma1 60>;
                         dma-names = "tx", "rx";
                         status = "disabled";
