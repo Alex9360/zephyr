@@ -1,4 +1,4 @@
-cription: |
+description: |
   Texas Instruments TLV320AIC26 Low Power Stereo Audio Codec.
   Control interface: SPI. Audio interface: I2S.
 
