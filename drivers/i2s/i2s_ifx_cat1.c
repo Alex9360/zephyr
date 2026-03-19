@@ -110,8 +110,8 @@ static int compute_clk_div(uint32_t clk_hz, const struct i2s_config *cfg,
 			    uint8_t *out)
 {
 	/* SCK = frame_clk_freq * channels * word_size */
-	uint32_t sck = cfg->frame_clk_freq * (uint32_t)cfg->channels *
-		       32;
+//	uint32_t sck = cfg->frame_clk_freq * (uint32_t)cfg->channels * (uint32_t)cfg->word_size;
+	uint32_t sck = cfg->frame_clk_freq * (uint32_t)cfg->channels * 32;
 	uint32_t div;
 	uint32_t clock;
 	clock_control_get_rate(DEVICE_DT_GET(DT_NODELABEL(clk_hf5)), NULL, &clock);
@@ -124,6 +124,7 @@ static int compute_clk_div(uint32_t clk_hz, const struct i2s_config *cfg,
 			cfg->frame_clk_freq, clock, div);
 		return -EINVAL;
 	}
+	printf("sck = %d, clock = %d, div = %d\n",sck, clock, div);
 	*out = (uint8_t)div;
 	return 0;
 }
@@ -311,51 +312,6 @@ static void i2s_rx_stream_disable(const struct device *dev, bool drop)
 	}
 }
 
-#if 0
-static void dma_tx_callback(const struct device *dma_dev, void *arg,
-			     uint32_t channel, int status)
-{
-	const struct device *dev = arg;
-	struct ifx_i2s_data *data = dev->data;
-	const struct ifx_i2s_config *cfg = dev->config;
-	struct i2s_stream *stream = &data->tx;
-	uint32_t mask;
-
-	ARG_UNUSED(dma_dev);
-	ARG_UNUSED(channel);
-
-	if (status < 0) {
-		LOG_ERR("TX DMA error %d", status);
-		if (stream->mem_block != NULL) {
-			k_mem_slab_free(stream->cfg.mem_slab, stream->mem_block);
-			stream->mem_block = NULL;
-		}
-		stream->state = I2S_STATE_ERROR;
-		return;
-	}
-
-	k_mem_slab_free(stream->cfg.mem_slab, stream->mem_block);
-	stream->mem_block = NULL;
-
-	if (stream->xfer_pending) {
-		stream->xfer_pending = false;
-		(void)start_dma_tx_transfer(dev);
-		mask = Cy_I2S_GetInterruptMask(cfg->reg);
-		Cy_I2S_SetInterruptMask(cfg->reg, mask | CY_I2S_INTR_TX_TRIGGER);
-	}
-
-	if (data->tx_waiting_to_start) {
-		data->tx_waiting_to_start = false;
-		mask = Cy_I2S_GetInterruptMask(cfg->reg);
-		Cy_I2S_SetInterruptMask(cfg->reg,
-					mask | CY_I2S_INTR_TX_TRIGGER | INTR_TX_ERRORS);
-#if 0
-		Cy_SysInt_EnableSystemInt(55);
-#endif
-		Cy_I2S_EnableTx(cfg->reg);
-	}
-}
-#endif
 #if 1
 static void dma_tx_callback(const struct device *dma_dev, void *arg,
                              uint32_t channel, int status)
@@ -452,7 +408,6 @@ static void dma_rx_callback(const struct device *dma_dev, void *arg,
 	Cy_I2S_SetInterruptMask(cfg->reg, mask | CY_I2S_INTR_RX_TRIGGER);
 }
 
-
 static void tx_fifo_trigger_handler(const struct device *dev)
 {
 	struct ifx_i2s_data *data = dev->data;
@@ -521,7 +476,6 @@ static void i2s_isr(const struct device *dev)
 	const struct ifx_i2s_config *cfg = dev->config;
 	struct ifx_i2s_data *data = dev->data;
 	uint32_t intr;
-//	printf("fifo value = %d\n", cfg->reg->TX_FIFO_STATUS);
 	intr = Cy_I2S_GetInterruptStatusMasked(cfg->reg);
 
 	if (intr & CY_I2S_INTR_TX_OVERFLOW) {
@@ -660,6 +614,7 @@ static int ifx_i2s_configure(const struct device *dev, enum i2s_dir dir,
 	data->pdl_cfg.clkDiv = pdl_clk_div;
 	data->pdl_cfg.extClk = false;
 	data->pdl_cfg.mclkEn = true;
+	data->pdl_cfg.mclkDiv = CY_I2S_MCLK_DIV_8;
 
 	if (is_tx) {
 		data->pdl_cfg.txEnabled          = true;
@@ -674,6 +629,7 @@ static int ifx_i2s_configure(const struct device *dev, enum i2s_dir dir,
 		data->pdl_cfg.txSckiInversion    = !!(i2s_cfg->format & I2S_FMT_BIT_CLK_INV);
 		data->pdl_cfg.txChannels         = 2U;
 		data->pdl_cfg.txChannelLength    = CY_I2S_LEN32;
+		//data->pdl_cfg.txChannelLength    = word_len;
 		data->pdl_cfg.txWordLength       = word_len;
 		data->pdl_cfg.txOverheadValue    = CY_I2S_OVHDATA_ZERO;
 		data->pdl_cfg.txFifoTriggerLevel = (uint8_t)(block_samples / 2U);
@@ -699,6 +655,7 @@ static int ifx_i2s_configure(const struct device *dev, enum i2s_dir dir,
 		data->pdl_cfg.rxSckiInversion    = !!(i2s_cfg->format & I2S_FMT_BIT_CLK_INV);
 		data->pdl_cfg.rxChannels         = 2U;
 		data->pdl_cfg.rxChannelLength    = CY_I2S_LEN32;
+		//data->pdl_cfg.rxChannelLength    = word_len;
 		data->pdl_cfg.rxWordLength       = word_len;
 		data->pdl_cfg.rxSignExtension    = false;
 		data->pdl_cfg.rxFifoTriggerLevel = (uint8_t)(block_samples - 1U);
@@ -714,12 +671,6 @@ static int ifx_i2s_configure(const struct device *dev, enum i2s_dir dir,
 		LOG_ERR("Cy_I2S_Init failed");
 		return -EIO;
 	}
-#if 1
-	REG_I2S_CLOCK_CTL(cfg->reg) =
-    		_VAL2FLD(I2S_CLOCK_CTL_CLOCK_DIV, pdl_clk_div - 1U) |
-   		_VAL2FLD(I2S_CLOCK_CTL_MCLK_DIV, 0U) |   /* divide by 1 */
-    		_BOOL2FLD(I2S_CLOCK_CTL_MCLK_EN, true);
-#endif
 	Cy_I2S_SetInterruptMask(cfg->reg, INTR_TX_ERRORS | INTR_RX_ERRORS);
 
 	if (is_tx) {
