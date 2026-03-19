@@ -4,33 +4,23 @@
         };
 };
 
-&scb11 {
-        status = "okay";
+&scb5 {
+    status = "okay";
+    cs-gpios = <&gpio_prt4 4 GPIO_ACTIVE_LOW>;
 
-	 audio_codec: tas2563@4c {
-                compatible = "ti,tas2563";
-                reg = <0x4c>;
-                status = "okay";
-        };
+    audio_codec: audio-codec@0 {
+        compatible = "ti,tlv320aic26";
+        reg = <0>;
+        spi-max-frequency = <12000000>;
+        mclk-frequency = <12000000>;
+        status = "okay";
+    };
 };
 
 &dma1 {
 	status = "okay";
 };
 
-/*
-&clk_hf7 {
-	status = "okay";
-};
-
-&clk_hf6 {
-	status = "okay";
-};
-
-&clk_hf5 {
-	status = "okay";
-};
-*/
 &i2s0 {
-        status = "okay";
+	status = "okay";
 };
