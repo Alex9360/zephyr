@@ -36,7 +36,7 @@
 		watchdog0 = &watchdog0;
 		dma0 = &dma0;
 		uart3 = &uart3;
-		eeprom-0 = &eeprom0;
+//		eeprom-0 = &eeprom0;
 	};
 
 	leds {
@@ -198,6 +198,7 @@ spi0: &scb5 {
 	ifx,peri-clk = <0x0123>;
 	ifx,peri-div = <1>; /* 16-bit divider */
 	ifx,peri-div-inst = <3>;
+#if 0
 	/*
 	w25q128jvsq2449_spi: spi-nor-flash@0 {
 		compatible = "jedec,spi-nor";
@@ -218,7 +219,7 @@ spi0: &scb5 {
 		spi-max-frequency = <DT_FREQ_M(8)>;
 		timeout = <5>;
 	};
-
+#endif
 };
 
 uart3: &scb3 {
@@ -256,6 +257,29 @@ can0: &can0_0 {
 
 	pinctrl-0 = <&p0_2_can0_0_tx &p0_3_can0_0_rx>;
 	pinctrl-names = "default";
+};
+
+i2c8: &scb8 {
+       compatible = "infineon,cat1-i2c-pdl";
+
+       #address-cells = <1>;
+       #size-cells = <0>;
+
+       pinctrl-0 = <&p1_6_scb8_i2c_scl &p1_5_scb8_i2c_sda>;
+       pinctrl-names = "default";
+
+       clocks = <&clk_hf2>;
+       ifx,peri-group = <IFX_PERI_GRP_INST_SEL(1, 0)>;
+       ifx,peri-clk = <0x0113>;
+       ifx,peri-div = <0>; /* 8-bit divider */
+       ifx,peri-div-inst = <1>;
+       status = "disabled";
+};
+
+&i2s0 {
+        pinctrl-0 = <&p11_0_i2s0_tx_mck &p11_1_i2s0_tx_sck &p11_2_i2s0_tx_fsync &p12_0_i2s0_tx_sd>;
+        pinctrl-names = "default";
+        status = "okay";
 };
 
 &gpio_prt0 {
@@ -348,10 +372,10 @@ can0: &can0_0 {
 	status = "okay";
 };
 &clk_hf3 {
-	status = "okay";
+	status = "disabled";
 };
 &clk_hf4 {
-	status = "okay";
+	status = "disabled";
 };
 &clk_hf5 {
 	status = "okay";
