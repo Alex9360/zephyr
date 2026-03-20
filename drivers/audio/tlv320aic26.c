@@ -1,3 +1,8 @@
+/*
+ * Copyright(c), Linumiz 2026
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #define DT_DRV_COMPAT ti_tlv320aic26
 
 #include <zephyr/kernel.h>
@@ -19,40 +24,30 @@ struct tlv320aic26_config {
 
 struct tlv320aic26_data {
 	bool configured;
-	uint32_t sample_rate;
-	uint8_t word_size;
 };
 
 struct pll_cfg {
-	bool pll_en;
-	bool fsref_44k1;
+	uint16_t d;
 	uint8_t p;
 	uint8_t j;
-	uint16_t d;
 	uint8_t q;
 	uint8_t fs_div;
+	bool pll_en;
+	bool fsref_44k1;
 };
+
 static int aic26_write(const struct device *dev, uint8_t page,
 		       uint8_t addr, uint16_t val)
 {
 	const struct tlv320aic26_config *cfg = dev->config;
 	uint16_t cmd = AIC26_BUILD_CMD(AIC26_CMD_WRITE, page, addr);
-	uint8_t buf[4];
-	int ret;
-
-
-	buf[0] = (uint8_t)(cmd >> 8);
-	buf[1] = (uint8_t)(cmd & 0xFF);
-	buf[2] = (uint8_t)(val >> 8);
-	buf[3] = (uint8_t)(val & 0xFF);
-
-	const struct spi_buf tx = { .buf = buf, .len = sizeof(buf) };
+	uint8_t buf[4] = {cmd >> 8, cmd & 0xFF, val >> 8, val & 0xFF};
+	const struct spi_buf tx = { .buf = buf, .len = 4 };
 	const struct spi_buf_set tx_set = { .buffers = &tx, .count = 1 };
-
+	int ret;
 	ret = spi_write_dt(&cfg->spi, &tx_set);
-
 	if (ret < 0) {
-		LOG_ERR("SPI write fail P%u R0x%02x: %d", page, addr, ret);
+		 LOG_ERR("SPI write fail P%u R0x%02x: %d", page, addr, ret);
 	}
 	return ret;
 }
@@ -62,45 +57,34 @@ static int aic26_read(const struct device *dev, uint8_t page,
 {
 	const struct tlv320aic26_config *cfg = dev->config;
 	uint16_t cmd = AIC26_BUILD_CMD(AIC26_CMD_READ, page, addr);
-	uint8_t tx_buf[4] = { 0 };
-	uint8_t rx_buf[4] = { 0 };
+	uint8_t tx_buf[4] = {cmd >> 8, cmd & 0xFF, 0, 0};
+	uint8_t rx_buf[4] = {0};
+	const struct spi_buf tx = { .buf = tx_buf, .len = 4 };
+	const struct spi_buf_set tx_set = { .buffers = &tx, .count = 1 };
+	const struct spi_buf rx = { .buf = rx_buf, .len = 4 };
+	const struct spi_buf_set rx_set = { .buffers = &rx, .count = 1 };
 	int ret;
 
-	tx_buf[0] = (uint8_t)(cmd >> 8);
-	tx_buf[1] = (uint8_t)(cmd & 0xFF);
-
-	const struct spi_buf tx = { .buf = tx_buf, .len = sizeof(tx_buf) };
-	const struct spi_buf_set tx_set = { .buffers = &tx, .count = 1 };
-	const struct spi_buf rx = { .buf = rx_buf, .len = sizeof(rx_buf) };
-	const struct spi_buf_set rx_set = { .buffers = &rx, .count = 1 };
-
 	ret = spi_transceive_dt(&cfg->spi, &tx_set, &rx_set);
-
 	if (ret < 0) {
 		LOG_ERR("SPI read fail P%u R0x%02x: %d", page, addr, ret);
 		return ret;
 	}
-
 	*val = ((uint16_t)rx_buf[2] << 8) | rx_buf[3];
-	return 0;
+	return ret;
 }
-
 
 static int aic26_update(const struct device *dev, uint8_t page,
 			uint8_t addr, uint16_t mask, uint16_t val)
 {
 	uint16_t reg;
-	int ret;
+	int ret = aic26_read(dev, page, addr, &reg);
 
-	ret = aic26_read(dev, page, addr, &reg);
 	if (ret < 0) {
 		return ret;
 	}
-
-	reg = (reg & ~mask) | (val & mask);
-	return aic26_write(dev, page, addr, reg);
+	return aic26_write(dev, page, addr, (reg & ~mask) | (val & mask));
 }
-
 
 static int aic26_sw_reset(const struct device *dev)
 {
@@ -113,6 +97,7 @@ static int aic26_sw_reset(const struct device *dev)
 	}
 	return ret;
 }
+
 static int aic26_setup_reference(const struct device *dev)
 {
 	return aic26_write(dev, AIC26_PAGE1, AIC26_P1_REFERENCE,
@@ -122,11 +107,10 @@ static int aic26_setup_reference(const struct device *dev)
 static int aic26_calc_pll(uint32_t mclk, uint32_t fs, struct pll_cfg *out)
 {
 	static const uint32_t fsref_list[] = { 48000, 44100 };
-	uint64_t num, k10k, vco_x10k, vco_hz;
+	uint64_t num, k10k, vco_hz;
 	uint32_t div_x2;
 	uint32_t fsref;
-	uint32_t fsref_x2;
-	uint32_t denom, mclk_p;
+	uint32_t mclk_p;
 	uint32_t q, j, d;
 	int8_t fs_div;
 
@@ -139,12 +123,11 @@ static int aic26_calc_pll(uint32_t mclk, uint32_t fs, struct pll_cfg *out)
 
 	for (int fi = 0; fi < ARRAY_SIZE(fsref_list); fi++) {
 		fsref = fsref_list[fi];
-		fsref_x2 = fsref * 2;
 
-		if (fsref_x2 % fs != 0) {
+		if ((fsref * 2) % fs != 0) {
 			continue;
 		}
-		div_x2 = fsref_x2 / fs;
+		div_x2 = (fsref * 2) / fs;
 
 		switch (div_x2) {
 		case 2:
@@ -178,11 +161,8 @@ static int aic26_calc_pll(uint32_t mclk, uint32_t fs, struct pll_cfg *out)
 		out->fs_div = (uint8_t)fs_div;
 		out->fsref_44k1 = (fi == 1);
 
-		/* Try PLL-free path first */
-		denom = 128U * fsref;
-
-		if ((mclk % denom) == 0) {
-			q = mclk / denom;
+		if ((mclk % (128U * fsref)) == 0) {
+			q = mclk / (128U * fsref);
 
 			if (q >= 2 && q <= 17) {
 				out->pll_en = false;
@@ -216,14 +196,12 @@ static int aic26_calc_pll(uint32_t mclk, uint32_t fs, struct pll_cfg *out)
 				}
 			}
 
-			/* Must divide evenly */
 			if ((uint64_t)mclk * k10k != num) {
 				continue;
 			}
 
 			/* Validate PLL VCO: 80 MHz <= MCLK*K/P <= 110 MHz */
-			vco_x10k = (uint64_t)mclk * k10k / p;
-			vco_hz = vco_x10k / 10000;
+			vco_hz = ((uint64_t)mclk * k10k) / (p *10000);
 
 			if (vco_hz < 80000000ULL || vco_hz > 110000000ULL) {
 				continue;
@@ -242,6 +220,7 @@ static int aic26_calc_pll(uint32_t mclk, uint32_t fs, struct pll_cfg *out)
 	LOG_ERR("No valid clock config for MCLK=%u Fs=%u", mclk, fs);
 	return -EINVAL;
 }
+
 static int aic26_set_pll(const struct device *dev, const struct pll_cfg *pll)
 {
 	uint16_t pll1, pll2;
@@ -404,12 +383,10 @@ static int aic26_configure(const struct device *dev,
 		return ret;
 	}
 
-	data->sample_rate = cfg->dai_cfg.i2s.frame_clk_freq;
-	data->word_size   = cfg->dai_cfg.i2s.word_size;
 	data->configured  = true;
 
 	LOG_INF("Configured: Fs=%u ws=%u %s",
-		data->sample_rate, data->word_size,
+		cfg->dai_cfg.i2s.frame_clk_freq, cfg->dai_cfg.i2s.word_size,
 		codec_master ? "master" : "slave");
 
 	return 0;
@@ -419,7 +396,6 @@ static void aic26_start_output(const struct device *dev)
 	struct tlv320aic26_data *data = dev->data;
 	uint16_t reg;
 	int ret;
-	int polls;
 	bool ready = false;
 
 	if (!data->configured) {
@@ -435,10 +411,7 @@ static void aic26_start_output(const struct device *dev)
 		return;
 	}
 
-	/* Poll DAPWDF - clears when DAC is powered up */
-	polls = AIC26_DAC_TIMEOUT_MS / AIC26_DAC_POLL_MS;
-
-	for (int i = 0; i < polls; i++) {
+	for (int i = 0; i < (AIC26_DAC_TIMEOUT_MS / AIC26_DAC_POLL_MS); i++) {
 		k_msleep(AIC26_DAC_POLL_MS);
 		ret = aic26_read(dev, AIC26_PAGE2,
 				 AIC26_P2_POWER_CTL, &reg);
@@ -634,7 +607,6 @@ static const struct audio_codec_api aic26_api = {
 	.apply_properties = aic26_apply_properties,
 };
 
-/* SPI Mode 1: CPOL=0, CPHA=1 per datasheet page 29 */
 #define TLV320AIC26_INIT(n)                                             \
 	static struct tlv320aic26_data aic26_data_##n;                  \
                                                                         \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Linumiz
+ * Copyright (c) 2026 Linumiz
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -111,4 +111,4 @@
 #define AIC26_DAC_POLL_MS           10
 #define AIC26_DAC_TIMEOUT_MS        500
 
-#endif /* ZEPHYR_DRIVERS_AUDIO_TLV320AIC26_H_ */
+#endif
