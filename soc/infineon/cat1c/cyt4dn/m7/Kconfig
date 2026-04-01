@@ -1,0 +1,21 @@
+# Copyright (c) 2026 Linumiz
+# Copyright (c) 2026 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+if SOC_SERIES_CYT4DN
+
+config INFINEON_CAT1C_M7
+	bool
+	default y if SOC_CYT4DNJBZS_M7
+	select ARM
+	select CPU_CORTEX_M7
+	select CPU_CORTEX_M_HAS_SYSTICK
+	select CPU_CORTEX_M_HAS_VTOR
+	select CPU_HAS_ARM_MPU
+	select CPU_HAS_ICACHE
+	select CPU_HAS_DCACHE
+	select CPU_HAS_FPU
+	select SOC_PREP_HOOK
+	select SOC_EARLY_INIT_HOOK
+
+endif
