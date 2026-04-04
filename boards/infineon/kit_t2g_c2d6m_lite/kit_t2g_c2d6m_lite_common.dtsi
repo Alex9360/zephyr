@@ -92,10 +92,12 @@
 };
 
 uart7: &scb7 {
-	compatible = "infineon,cat1-uart-pdl";
+	compatible = "infineon,uart";
+	dmas = <&dma1 30>, <&dma1 31>;
+	dma-names = "tx", "rx";
 	current-speed = <115200>;
 	ifx,peri-group = <IFX_PERI_GRP_INST_SEL(1, 0)>;
-	ifx,peri-clk = <0x010f>;
+//	ifx,peri-clk = <0x010f>;
 	ifx,peri-div = <0>; /* 8-bit divider */
 	ifx,peri-div-inst = <0>;
 
@@ -105,16 +107,52 @@ uart7: &scb7 {
 };
 
 uart9: &scb9 {
-	compatible = "infineon,cat1-uart-pdl";
+	compatible = "infineon,uart";
+	dmas = <&dma1 34>, <&dma1 35>;
+	dma-names = "tx", "rx";
 	current-speed = <115200>;
 	ifx,peri-group = <IFX_PERI_GRP_INST_SEL(1, 0)>;
-	ifx,peri-clk = <0x0111>;
+//	ifx,peri-clk = <0x0111>;
 	ifx,peri-div = <0>; /* 8-bit divider */
 	ifx,peri-div-inst = <1>;
 
 	/* UART pins */
 	pinctrl-0 = <&p29_0_scb9_uart_rx &p29_1_scb9_uart_tx>;
 	pinctrl-names = "default";
+	status = "okay";
+};
+
+i2c11: &scb11 {
+       compatible = "infineon,i2c";
+
+       #address-cells = <1>;
+       #size-cells = <0>;
+
+       pinctrl-0 = <&p0_4_scb11_i2c_scl &p0_5_scb11_i2c_sda>;
+       pinctrl-names = "default";
+
+       ifx,peri-group = <IFX_PERI_GRP_INST_SEL(1, 0)>;
+       ifx,peri-div = <0>; /* 8-bit divider */
+       ifx,peri-div-inst = <1>;
+       status = "okay";
+
+       accel@53 {
+               compatible = "adi,adxl345";
+               reg = <0x53>;
+       };
+};
+
+&adc0 {
+	clock-frequency = <26670000>;
+	ifx,peri-group = <IFX_PERI_GRP_INST_SEL(1, 0)>;
+	ifx,peri-clk = <0x0114>;
+	ifx,peri-div = <0>; /* 8-bit divider */
+	ifx,peri-div-inst = <2>;
+	status = "okay";
+};
+
+&dma1 {
+	status = "okay";
 };
 
 &gpio_prt0 {
