@@ -17,6 +17,7 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/kernel.h>
+#include <zephyr/drivers/clock_control.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -134,6 +135,11 @@ struct ifx_cat1_uart_config {
 	uint16_t irq_num;
 	uint8_t irq_priority;
 	en_clk_dst_t clk_dst;
+#if defined(CONFIG_SOC_SERIES_CYT4DN)
+	uint32_t clock_peri_group;
+	uint8_t peri_div_type;
+	uint8_t peri_div_type_inst;
+#endif
 };
 
 typedef void (*ifx_cat1_uart_event_callback_t)(void *callback_arg);
@@ -370,10 +376,41 @@ static int ifx_cat1_uart_configure(const struct device *dev, const struct uart_c
 	data->scb_config.enableCts = cfg->flow_ctrl;
 	data->scb_config.rtsRxFifoLevel = cfg->flow_ctrl ? IFX_UART_RTS_RX_FIFO_LEVEL : 0UL;
 
+#if defined(CONFIG_SOC_SERIES_CYT4DN)
+	{
+		uint32_t clock_frequency;
+		uint16_t div;
+
+		result = clock_control_get_rate(DEVICE_DT_GET(DT_NODELABEL(clk_hf2)),
+						NULL, &clock_frequency);
+		if (result < 0) {
+			return result;
+		}
+
+		div = (int)clock_frequency /
+			(IFX_UART_OVERSAMPLE_MIN * cfg->baudrate);
+
+		Cy_SysClk_PeriPclkDisableDivider(config->clock_peri_group,
+						 config->peri_div_type,
+						 config->peri_div_type_inst);
+		Cy_SysClk_PeriPclkSetDivider(config->clock_peri_group,
+					     config->peri_div_type,
+					     config->peri_div_type_inst, div);
+		Cy_SysClk_PeriPclkEnableDivider(config->clock_peri_group,
+						config->peri_div_type,
+						config->peri_div_type_inst);
+		Cy_SysClk_PeriPclkAssignDivider(config->clk_dst,
+						config->peri_div_type,
+						config->peri_div_type_inst);
+	}
 	Cy_SCB_UART_Init(config->reg_addr, &(data->scb_config), NULL);
 	Cy_SCB_UART_Enable(config->reg_addr);
-	/* Configure the baud rate */
+	result = CY_RSLT_SUCCESS;
+#else
+	Cy_SCB_UART_Init(config->reg_addr, &(data->scb_config), NULL);
+	Cy_SCB_UART_Enable(config->reg_addr);
 	result = ifx_cat1_uart_set_baud(dev, cfg->baudrate);
+#endif
 
 	/* Enable RTS/CTS flow control */
 	if ((result == CY_RSLT_SUCCESS) && cfg->flow_ctrl) {
@@ -1267,6 +1304,7 @@ static int ifx_cat1_uart_init(const struct device *dev)
 #endif
 
 	/* Connect this SCB to the peripheral clock */
+#if !defined(CONFIG_SOC_SERIES_CYT4DN)
 	result = ifx_cat1_utils_peri_pclk_assign_divider(config->clk_dst, &data->clock);
 	if (result != CY_RSLT_SUCCESS) {
 		return -EIO;
@@ -1282,8 +1320,10 @@ static int ifx_cat1_uart_init(const struct device *dev)
 	} else {
 		return -ENOTSUP;
 	}
+#endif
 
-#if (CONFIG_SOC_FAMILY_INFINEON_CAT1C && CONFIG_UART_INTERRUPT_DRIVEN)
+#if (CONFIG_SOC_FAMILY_INFINEON_CAT1C && CONFIG_UART_INTERRUPT_DRIVEN && \
+	!defined(CONFIG_SOC_SERIES_CYT4DN))
 	/* Enable the UART interrupt */
 	enable_sys_int(config->irq_num, config->irq_priority,
 		       (void (*)(const void *))(void *)ifx_cat1_uart_irq_handler, &data->obj);
@@ -1291,6 +1331,10 @@ static int ifx_cat1_uart_init(const struct device *dev)
 
 	/* Perform initial Uart configuration */
 	ret = ifx_cat1_uart_configure(dev, &config->dt_cfg);
+
+#if defined(CONFIG_SOC_SERIES_CYT4DN)
+	irq_enable(config->irq_num);
+#endif
 
 #ifdef CONFIG_UART_ASYNC_API
 	data->async.uart_dev = dev;
@@ -1312,6 +1356,10 @@ static int ifx_cat1_uart_init(const struct device *dev)
 			PERI_0_TRIG_IN_MUX_0_SCB_RX_TR_OUT0 + data->hw_resource.block_num,
 			PERI_0_TRIG_OUT_MUX_0_PDMA0_TR_IN0 + data->async.dma_rx.dma_channel, false,
 			TRIGGER_TYPE_LEVEL);
+#elif defined(CONFIG_SOC_SERIES_CYT4DN)
+		Cy_TrigMux_Select(
+			TRIG_OUT_1TO1_1_SCB_RX_TO_PDMA10 + (data->hw_resource.block_num * 2),
+			false, TRIGGER_TYPE_LEVEL);
 #elif defined(COMPONENT_CAT1B)
 		Cy_TrigMux_Connect(TRIG_IN_MUX_0_SCB_RX0 + (3 * data->hw_resource.block_num),
 				   TRIG_OUT_MUX_0_PDMA0_TR_IN0 + data->async.dma_rx.dma_channel,
@@ -1338,6 +1386,10 @@ static int ifx_cat1_uart_init(const struct device *dev)
 			PERI_0_TRIG_IN_MUX_0_SCB_TX_TR_OUT0 + data->hw_resource.block_num,
 			PERI_0_TRIG_OUT_MUX_0_PDMA0_TR_IN0 + data->async.dma_tx.dma_channel, false,
 			TRIGGER_TYPE_EDGE);
+#elif defined(CONFIG_SOC_SERIES_CYT4DN)
+		Cy_TrigMux_Select(
+			TRIG_OUT_1TO1_1_SCB_TX_TO_PDMA10 + (data->hw_resource.block_num * 2),
+			false, TRIGGER_TYPE_EDGE);
 #elif defined(COMPONENT_CAT1B)
 		Cy_TrigMux_Connect(TRIG_IN_MUX_0_SCB_TX0 + (3 * data->hw_resource.block_num),
 				   TRIG_OUT_MUX_0_PDMA0_TR_IN0 + data->async.dma_tx.dma_channel,
@@ -1415,7 +1467,9 @@ static DEVICE_API(uart, ifx_cat1_uart_driver_api) = {
 #define UART_DMA_CHANNEL(index, dir, ch_dir, src_data_size, dst_data_size)
 #endif /* CONFIG_UART_ASYNC_API */
 
-#if (CONFIG_SOC_FAMILY_INFINEON_CAT1C)
+#if defined(CONFIG_SOC_SERIES_CYT4DN)
+#define IRQ_INFO(n) .irq_num = DT_INST_IRQN(n), .irq_priority = DT_INST_IRQ(n, priority)
+#elif (CONFIG_SOC_FAMILY_INFINEON_CAT1C)
 #define IRQ_INFO(n)                                                                                \
 	.irq_num = DT_INST_PROP_BY_IDX(n, system_interrupts, SYS_INT_NUM),                         \
 	.irq_priority = DT_INST_PROP_BY_IDX(n, system_interrupts, SYS_INT_PRI)
@@ -1423,7 +1477,9 @@ static DEVICE_API(uart, ifx_cat1_uart_driver_api) = {
 #define IRQ_INFO(n) .irq_num = DT_INST_IRQN(n), .irq_priority = DT_INST_IRQ(n, priority)
 #endif
 
-#if defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) || defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
+#if defined(CONFIG_SOC_SERIES_CYT4DN)
+#define PERI_INFO(n)
+#elif defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) || defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
 #define PERI_INFO(n) .clock_peri_group = DT_PROP_BY_IDX(DT_INST_PHANDLE(n, clocks), peri_group, 1),
 #else
 #define PERI_INFO(n)
@@ -1446,7 +1502,9 @@ static DEVICE_API(uart, ifx_cat1_uart_driver_api) = {
 #define CALL_UART_IRQ_CONFIG(n)
 #endif
 
-#if defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
+#if defined(CONFIG_SOC_SERIES_CYT4DN)
+#define UART_PERI_CLOCK_INIT(n)
+#elif defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
 #define UART_PERI_CLOCK_INIT(n)                                                                    \
 	.clock =                                                                                   \
 		{                                                                                  \
@@ -1467,6 +1525,15 @@ static DEVICE_API(uart, ifx_cat1_uart_driver_api) = {
 			.channel = DT_INST_PROP_BY_PHANDLE(n, clocks, channel),                    \
 	},                                                                                         \
 	PERI_INFO(n)
+#endif
+
+#if defined(CONFIG_SOC_SERIES_CYT4DN)
+#define CYT4DN_CLK_INFO(n)                                                                         \
+	.clock_peri_group = DT_INST_PROP(n, ifx_peri_group),                                       \
+	.peri_div_type = DT_INST_PROP(n, ifx_peri_div),                                            \
+	.peri_div_type_inst = DT_INST_PROP(n, ifx_peri_div_inst),
+#else
+#define CYT4DN_CLK_INFO(n)
 #endif
 
 #define INFINEON_CAT1_UART_INIT(n)                                                                 \
@@ -1491,6 +1558,7 @@ static DEVICE_API(uart, ifx_cat1_uart_driver_api) = {
 		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n),                                         \
 		.reg_addr = (CySCB_Type *)DT_INST_REG_ADDR(n),                                     \
 		.clk_dst = DT_INST_PROP(n, clk_dst),                                               \
+		CYT4DN_CLK_INFO(n)                                                                 \
 		IRQ_INFO(n)};                                                                      \
                                                                                                    \
 	DEVICE_DT_INST_DEFINE(n, &ifx_cat1_uart_init##n, NULL, &ifx_cat1_uart##n##_data,           \

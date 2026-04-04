@@ -56,3 +56,15 @@ properties:
     description: |
       Sets the number of data bits. Defaults to standard of 8 if not specified.
     default: 8
+
+  ifx,peri-group:
+    type: int
+    description: Peripheral group identifier for manual clock configuration
+
+  ifx,peri-div:
+    type: int
+    description: Peripheral clock divider type
+
+  ifx,peri-div-inst:
+    type: int
+    description: Peripheral clock divider instance
