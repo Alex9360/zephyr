@@ -15,6 +15,7 @@
 
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/drivers/clock_control.h>
 #include <zephyr/drivers/clock_control/clock_control_ifx_cat1.h>
 #include <zephyr/dt-bindings/clock/ifx_clock_source_common.h>
 
@@ -82,6 +83,11 @@ struct ifx_cat1_i2c_config {
 	uint8_t irq_priority;
 	uint32_t irq_num;
 	en_clk_dst_t clk_dst;
+#if defined(CONFIG_SOC_SERIES_CYT4DN)
+	uint32_t clock_peri_group;
+	uint8_t peri_div_type;
+	uint8_t peri_div_type_inst;
+#endif
 	void (*irq_config_func)(const struct device *dev);
 	cy_cb_scb_i2c_handle_events_t i2c_handle_events_func;
 };
@@ -403,6 +409,67 @@ static int _i2c_set_peri_divider_psoc4(const struct device *dev, uint32_t freq,
 }
 #endif /* CONFIG_SOC_FAMILY_INFINEON_PSOC4 */
 
+#if defined(CONFIG_SOC_SERIES_CYT4DN)
+static uint32_t _i2c_set_peri_divider_cyt4dn(const struct device *dev, uint32_t freq,
+					      bool is_slave)
+{
+#define _SCB_PERI_CLOCK_SLAVE_STD_CYT4DN  8000000
+#define _SCB_PERI_CLOCK_SLAVE_FST_CYT4DN  12500000
+#define _SCB_PERI_CLOCK_MASTER_STD_CYT4DN 2000000
+#define _SCB_PERI_CLOCK_MASTER_FST_CYT4DN 8500000
+#define _SCB_PERI_CLOCK_MASTER_FSTP_CYT4DN 20000000
+#define _SCB_PERI_CLOCK_SLAVE_FSTP_CYT4DN 50000000
+
+	const struct ifx_cat1_i2c_config *const config = dev->config;
+	CySCB_Type *base = config->base;
+	uint32_t peri_freq = 0;
+	uint32_t hf_clock_frequency;
+	uint32_t divider;
+	uint32_t actual_scb_clock;
+
+	if (freq == 0) {
+		return 0;
+	}
+
+	if (freq <= CY_SCB_I2C_STD_DATA_RATE) {
+		peri_freq = is_slave ? _SCB_PERI_CLOCK_SLAVE_STD_CYT4DN
+				     : _SCB_PERI_CLOCK_MASTER_STD_CYT4DN;
+	} else if (freq <= CY_SCB_I2C_FST_DATA_RATE) {
+		peri_freq = is_slave ? _SCB_PERI_CLOCK_SLAVE_FST_CYT4DN
+				     : _SCB_PERI_CLOCK_MASTER_FST_CYT4DN;
+	} else if (freq <= CY_SCB_I2C_FSTP_DATA_RATE) {
+		peri_freq = is_slave ? _SCB_PERI_CLOCK_SLAVE_FSTP_CYT4DN
+				     : _SCB_PERI_CLOCK_MASTER_FSTP_CYT4DN;
+	}
+
+	if (peri_freq == 0) {
+		return 0;
+	}
+
+	clock_control_get_rate(DEVICE_DT_GET(DT_NODELABEL(clk_hf2)),
+			       NULL, &hf_clock_frequency);
+
+	divider = (hf_clock_frequency + (peri_freq / 2)) / peri_freq;
+	actual_scb_clock = hf_clock_frequency / divider;
+
+	Cy_SysClk_PeriPclkDisableDivider(config->clock_peri_group,
+					 config->peri_div_type,
+					 config->peri_div_type_inst);
+	Cy_SysClk_PeriPclkSetDivider(config->clock_peri_group,
+				     config->peri_div_type,
+				     config->peri_div_type_inst, divider);
+	Cy_SysClk_PeriPclkEnableDivider(config->clock_peri_group,
+					config->peri_div_type,
+					config->peri_div_type_inst);
+	Cy_SysClk_PeriPclkAssignDivider(config->clk_dst,
+					config->peri_div_type,
+					config->peri_div_type_inst);
+
+	return is_slave ? Cy_SCB_I2C_GetDataRate(base, actual_scb_clock)
+			: Cy_SCB_I2C_SetDataRate(base, freq, actual_scb_clock);
+}
+#endif
+
 static int ifx_cat1_i2c_configure(const struct device *dev, uint32_t dev_config)
 {
 	struct ifx_cat1_i2c_data *data = dev->data;
@@ -474,6 +541,12 @@ static int ifx_cat1_i2c_configure(const struct device *dev, uint32_t dev_config)
 			      (_i2c_default_config.i2cMode == CY_SCB_I2C_SLAVE));
 #elif defined(CONFIG_SOC_FAMILY_INFINEON_PSOC4)
 	if (_i2c_set_peri_divider_psoc4(dev, data->frequencyhal_hz, is_target_mode) != 0) {
+		LOG_ERR("Failed to configure I2C peripheral clock divider");
+		k_sem_give(&data->operation_sem);
+		return -EIO;
+	}
+#elif defined(CONFIG_SOC_SERIES_CYT4DN)
+	if (_i2c_set_peri_divider_cyt4dn(dev, data->frequencyhal_hz, is_target_mode) == 0) {
 		LOG_ERR("Failed to configure I2C peripheral clock divider");
 		k_sem_give(&data->operation_sem);
 		return -EIO;
@@ -678,10 +751,12 @@ static int ifx_cat1_i2c_init(const struct device *dev)
 	}
 
 	/* Connect this SCB to the peripheral clock */
+#if !defined(CONFIG_SOC_SERIES_CYT4DN)
 	result = ifx_cat1_utils_peri_pclk_assign_divider(config->clk_dst, &data->clock);
 	if (result != CY_RSLT_SUCCESS) {
 		return -EIO;
 	}
+#endif
 
 	/* Initial value for async operations */
 	data->pending = CAT1_I2C_PENDING_NONE;
@@ -793,13 +868,17 @@ static DEVICE_API(i2c, i2c_cat1_driver_api) = {
 	.target_register = ifx_cat1_i2c_target_register,
 	.target_unregister = ifx_cat1_i2c_target_unregister};
 
-#if defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) || defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
+#if defined(CONFIG_SOC_SERIES_CYT4DN)
+#define PERI_INFO(n)
+#elif defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) || defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
 #define PERI_INFO(n) .clock_peri_group = DT_PROP_BY_IDX(DT_INST_PHANDLE(n, clocks), peri_group, 1),
 #else
 #define PERI_INFO(n)
 #endif
 
-#if defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
+#if defined(CONFIG_SOC_SERIES_CYT4DN)
+#define I2C_PERI_CLOCK_INIT(n)
+#elif defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
 #define I2C_PERI_CLOCK_INIT(n)                                                                     \
 	.clock = {                                                                                 \
 		.block = IFX_CAT1_PERIPHERAL_GROUP_ADJUST(                                         \
@@ -827,6 +906,15 @@ static DEVICE_API(i2c, i2c_cat1_driver_api) = {
 			    DEVICE_DT_INST_GET(n), 0);                                             \
 	}
 
+#if defined(CONFIG_SOC_SERIES_CYT4DN)
+#define CYT4DN_CLK_INFO(n)                                                                         \
+	.clock_peri_group = DT_INST_PROP(n, ifx_peri_group),                                       \
+	.peri_div_type = DT_INST_PROP(n, ifx_peri_div),                                            \
+	.peri_div_type_inst = DT_INST_PROP(n, ifx_peri_div_inst),
+#else
+#define CYT4DN_CLK_INFO(n)
+#endif
+
 /* Macros for I2C instance declaration */
 #define INFINEON_CAT1_I2C_INIT(n)                                                                  \
 	PINCTRL_DT_INST_DEFINE(n);                                                                 \
@@ -845,6 +933,7 @@ static DEVICE_API(i2c, i2c_cat1_driver_api) = {
 		.irq_priority = DT_INST_IRQ(n, priority),                                          \
 		.irq_num = DT_INST_IRQN(n),                                                        \
 		.clk_dst = DT_INST_PROP(n, clk_dst),                                               \
+		CYT4DN_CLK_INFO(n)                                                                 \
 		.irq_config_func = ifx_cat1_i2c_irq_config_func_##n,                               \
 		.i2c_handle_events_func = i2c_handle_events_func_##n,                              \
 	};                                                                                         \
