@@ -132,6 +132,7 @@ void z_soc_irq_priority_set(unsigned int irq, unsigned int prio, unsigned int fl
 			CPUSS_CM7_1_SYSTEM_INT_CTL_CPU_INT_VALID_Msk;
 	}
 #endif
+	enable_cpu_int(prio);
 }
 
 void z_soc_irq_eoi(unsigned int irq)
