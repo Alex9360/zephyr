@@ -1,5 +1,5 @@
 /*
- * copyright (c) 2025 Linumiz GmbH
+ * copyright (c) 2026 Linumiz
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -7,6 +7,9 @@
 
 #include <cy_syslib.h>
 #include <cy_flash_srom.h>
+
+#define CY_SROM_RESP_STATUS_MASK	0xFF000000U
+#define CY_SROM_UNIQUE_ID_BYTES		11U
 
 static uint32_t reset_cause(uint32_t cause_mask)
 {
@@ -16,23 +19,22 @@ static uint32_t reset_cause(uint32_t cause_mask)
 		reset |= RESET_WATCHDOG;
 	}
 
-	if (cause_mask & (CY_SYSLIB_RESET_ACT_FAULT |
-				CY_SYSLIB_RESET_DPSLP_FAULT)) {
+	if (cause_mask & (CY_SYSLIB_RESET_ACT_FAULT | CY_SYSLIB_RESET_DPSLP_FAULT)) {
 		reset |= RESET_HARDWARE;
 	}
-
+#ifdef CY_SYSLIB_RESET_TC_DBGRESET
 	if (cause_mask & CY_SYSLIB_RESET_TC_DBGRESET) {
 		reset |= RESET_DEBUG;
 	}
-
+#endif
 	if (cause_mask & CY_SYSLIB_RESET_SOFT) {
 		reset |= RESET_SOFTWARE;
 	}
 
 	if (cause_mask & (CY_SYSLIB_RESET_SWWDT0 |
-				CY_SYSLIB_RESET_SWWDT1 |
-				CY_SYSLIB_RESET_SWWDT2 |
-				CY_SYSLIB_RESET_SWWDT3)) {
+			  CY_SYSLIB_RESET_SWWDT1 |
+			  CY_SYSLIB_RESET_SWWDT2 |
+			  CY_SYSLIB_RESET_SWWDT3)) {
 		reset |= RESET_WATCHDOG;
 	}
 
@@ -45,21 +47,21 @@ static uint32_t reset_cause(uint32_t cause_mask)
 	}
 
 	if (cause_mask & (CY_SYSLIB_RESET_BODVDDD |
-				CY_SYSLIB_RESET_BODVDDA |
-				CY_SYSLIB_RESET_BODVCCD)) {
+			  CY_SYSLIB_RESET_BODVDDA |
+			  CY_SYSLIB_RESET_BODVCCD)) {
 		reset |= RESET_BROWNOUT;
 	}
 
 	if (cause_mask & (CY_SYSLIB_RESET_OVDVDDD |
-				CY_SYSLIB_RESET_OVDVDDA |
-				CY_SYSLIB_RESET_OVDVCCD)) {
+			  CY_SYSLIB_RESET_OVDVDDA |
+			  CY_SYSLIB_RESET_OVDVCCD)) {
 		reset |= RESET_HARDWARE;
 	}
 
 	if (cause_mask & (CY_SYSLIB_RESET_OCD_ACT_LINREG |
-				CY_SYSLIB_RESET_OCD_DPSLP_LINREG |
-				CY_SYSLIB_RESET_OCD_REGHC |
-				CY_SYSLIB_RESET_PMIC)) {
+			  CY_SYSLIB_RESET_OCD_DPSLP_LINREG |
+			  CY_SYSLIB_RESET_OCD_REGHC |
+			  CY_SYSLIB_RESET_PMIC)) {
 		reset |= RESET_HARDWARE;
 	}
 
@@ -83,6 +85,7 @@ ssize_t z_impl_hwinfo_get_device_id(uint8_t *buffer, size_t length)
 	un_srom_api_args_t  args;
 	un_srom_api_resps_t resps;
 	cy_en_srom_driver_status_t st;
+	uint32_t uid[3];
 	size_t out_len;
 
 	if ((buffer == NULL) || (length == 0U)) {
@@ -98,9 +101,13 @@ ssize_t z_impl_hwinfo_get_device_id(uint8_t *buffer, size_t length)
 		return -EIO;
 	}
 
-	out_len = MIN(length, sizeof(resps.resp));
+	uid[0] = resps.resp[0] & ~CY_SROM_RESP_STATUS_MASK;
+	uid[1] = resps.resp[1];
+	uid[2] = resps.resp[2];
 
-	memcpy(buffer, resps.resp, out_len);
+	out_len = MIN(length, CY_SROM_UNIQUE_ID_BYTES);
+
+	memcpy(buffer, uid, out_len);
 
 	if (out_len < 0) {
 		return -ENOSYS;
@@ -141,13 +148,15 @@ int z_impl_hwinfo_get_supported_reset_cause(uint32_t *supported)
 	}
 
 	*supported = RESET_PIN |
-		RESET_SOFTWARE |
-		RESET_BROWNOUT |
-		RESET_POR |
-		RESET_WATCHDOG |
-		RESET_DEBUG |
-		RESET_LOW_POWER_WAKE |
-		RESET_HARDWARE;
+		     RESET_SOFTWARE |
+		     RESET_BROWNOUT |
+		     RESET_POR |
+		     RESET_WATCHDOG |
+#ifdef CY_SYSLIB_RESET_TC_DBGRESET
+		     RESET_DEBUG |
+#endif
+		     RESET_LOW_POWER_WAKE |
+		     RESET_HARDWARE;
 
 	return 0;
 }
