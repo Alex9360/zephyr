@@ -11,7 +11,7 @@ if(CONFIG_CPU_CORTEX_M7)
 add_subdirectory(m7)
 endif()
 
-zephyr_sources(soc_irq.c soc_srom.c soc_vector_table.c)
+zephyr_sources(soc_irq.c soc_vector_table.c)
 
 # Add linker files for ROM vectors, pdl lib section and ram offset
 zephyr_linker_sources(ROM_START SORT_KEY 0x0vectors ld/vector_table.ld)

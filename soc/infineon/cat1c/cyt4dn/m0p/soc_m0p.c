@@ -66,6 +66,7 @@ static void cat1c_m0p_srom_init()
 	NVIC_EnableIRQ(NvicMux2_IRQn);
 
 	/* Move IPC SROM API trigger to IRQ2 for the trampoline function. */
+	Cy_SysInt_SetInterruptSource(NvicMux1_IRQn, cpuss_interrupts_ipc_1_IRQn);
 	Cy_SysInt_SetInterruptSource(NvicMux2_IRQn, cpuss_interrupts_ipc_0_IRQn);
 }
 

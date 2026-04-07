@@ -11,128 +11,61 @@
 #include <zephyr/sys/util_macro.h>
 #include <zephyr/toolchain.h>
 #include <zephyr/sw_isr_table.h>
-#include <zephyr/arch/cpu.h>
-#include <zephyr/arch/arm/irq.h>
+#include <zephyr/arch/arm/arch.h>
 
 #include <cy_sysint.h>
 
-static void enable_cpu_int(uint32_t cpu_int)
-{
-#if (CONFIG_INFINEON_CAT1C_M0PLUS)
-	/* Lower irqs (0-2) are used for SROM, upper IRQs for priority mapping */
-	cpu_int = MAX(cpu_int, IRQ_PRIO_LOWEST);
-	NVIC_SetPriority(NvicMux0_IRQn + cpu_int, cpu_int);
-#else
-	NVIC_SetPriority(NvicMux0_IRQn + cpu_int, MAX(cpu_int, IRQ_PRIO_LOWEST));
-#endif
-	NVIC_EnableIRQ(NvicMux0_IRQn + cpu_int);
-}
+#define SROM_IRQS 3
 
 void enable_sys_int(uint32_t int_num, uint32_t priority, void (*isr)(const void *), const void *arg)
 {
 	irq_connect_dynamic(int_num, priority, isr, arg, 0);
 	irq_enable(int_num);
-	enable_cpu_int(priority);
-}
-
-/* Cy_SysInt_Init wrapper for Zephyr IRQ integration */
-cy_en_sysint_status_t Cy_SysInt_Init(const cy_stc_sysint_t *config, cy_israddress userIsr)
-{
-#if CONFIG_DYNAMIC_INTERRUPTS
-	irq_connect_dynamic(config->intrSrc, config->intrPriority, (void (*)(const void *))userIsr,
-			    NULL, 0);
-	return CY_SYSINT_SUCCESS;
-#else
-	/* Interrupts are not supported on cm0p */
-	k_fatal_halt(K_ERR_CPU_EXCEPTION);
-	return CY_SYSINT_BAD_PARAM;
-#endif
-}
-
-void Cy_SysInt_SetSystemIrqVector(cy_en_intr_t sysIntSrc, cy_israddress userIsr)
-{
-#if CONFIG_SRAM_VECTOR_TABLE
-	_sw_isr_table[sysIntSrc].isr = userIsr;
-#else
-	k_fatal_halt(K_ERR_CPU_EXCEPTION);
-#endif
-}
-
-cy_israddress Cy_SysInt_GetSystemIrqVector(cy_en_intr_t sysIntSrc)
-{
-	return (cy_israddress)_sw_isr_table[sysIntSrc].isr;
 }
 
 /* Custom interrupt controller */
 void z_soc_irq_init()
 {
-	return;
+	/* Nothing to initialize */
 }
 
 void z_soc_irq_enable(unsigned int irq)
 {
 	if (irq <= CPUSS_SYSTEM_INT_NR) {
-#if IS_ENABLED(CONFIG_INFINEON_CAT1C_M0PLUS)
-		CPUSS_CM0_SYSTEM_INT_CTL[irq] |= CPUSS_CM0_SYSTEM_INT_CTL_CPU_INT_VALID_Msk;
-#else
-		if (COND_CODE_1(CONFIG_SMP, (CY_IS_CM7_CORE_0 != 0),
-		    (IS_ENABLED(CONFIG_INFINEON_CAT1C_M7_0)))) {
-			CPUSS_CM7_0_SYSTEM_INT_CTL[irq] |=
-				CPUSS_CM7_0_SYSTEM_INT_CTL_CPU_INT_VALID_Msk;
-		} else {
-			CPUSS_CM7_1_SYSTEM_INT_CTL[irq] |=
-				CPUSS_CM7_1_SYSTEM_INT_CTL_CPU_INT_VALID_Msk;
-		}
-#endif
+		Cy_SysInt_EnableSystemInt(irq);
 	}
 }
 
 void z_soc_irq_disable(unsigned int irq)
 {
-#ifdef CONFIG_INFINEON_CAT1C_M0PLUS
-	CPUSS_CM0_SYSTEM_INT_CTL[irq] &= ~CPUSS_CM0_SYSTEM_INT_CTL_CPU_INT_VALID_Msk;
-#elif CONFIG_INFINEON_CAT1C_M7_0
-	CPUSS_CM7_0_SYSTEM_INT_CTL[irq] &= ~CPUSS_CM7_0_SYSTEM_INT_CTL_CPU_INT_VALID_Msk;
-#else
-	CPUSS_CM7_1_SYSTEM_INT_CTL[irq] &= ~CPUSS_CM7_1_SYSTEM_INT_CTL_CPU_INT_VALID_Msk;
-#endif
+	if (irq <= CPUSS_SYSTEM_INT_NR) {
+		Cy_SysInt_DisableSystemInt(irq);
+	}
 }
 
 int z_soc_irq_is_enabled(unsigned int irq)
 {
 	if (irq > CPUSS_SYSTEM_INT_NR) {
-		return 0;
-	}
-
 #ifdef CONFIG_INFINEON_CAT1C_M0PLUS
-	return (CPUSS_CM0_SYSTEM_INT_CTL[irq] & CPUSS_CM0_SYSTEM_INT_CTL_CPU_INT_VALID_Msk) != 0;
+		return (CPUSS_CM0_SYSTEM_INT_CTL[irq] & CPUSS_CM0_SYSTEM_INT_CTL_CPU_INT_VALID_Msk) != 0;
 #elif CONFIG_INFINEON_CAT1C_M7_0
-	return (CPUSS_CM7_0_SYSTEM_INT_CTL[irq] & CPUSS_CM7_0_SYSTEM_INT_CTL_CPU_INT_VALID_Msk) !=
-	       0;
+		return (CPUSS_CM7_0_SYSTEM_INT_CTL[irq] & CPUSS_CM7_0_SYSTEM_INT_CTL_CPU_INT_VALID_Msk) != 0;
 #else
-	return (CPUSS_CM7_1_SYSTEM_INT_CTL[irq] & CPUSS_CM7_1_SYSTEM_INT_CTL_CPU_INT_VALID_Msk) !=
-	       0;
+		return (CPUSS_CM7_1_SYSTEM_INT_CTL[irq] & CPUSS_CM7_1_SYSTEM_INT_CTL_CPU_INT_VALID_Msk) != 0;
 #endif
+	}
+	return 0;
 }
 
 void z_soc_irq_priority_set(unsigned int irq, unsigned int prio, unsigned int flags)
 {
 #if (CONFIG_INFINEON_CAT1C_M0PLUS)
-	CPUSS_CM0_SYSTEM_INT_CTL[irq] =
-		_VAL2FLD(CPUSS_CM0_SYSTEM_INT_CTL_CM0_CPU_INT_IDX, NvicMux0_IRQn + prio) |
-		CPUSS_CM0_SYSTEM_INT_CTL_CPU_INT_VALID_Msk;
-#else
-	if (0UL != CY_IS_CM7_CORE_0) {
-		CPUSS_CM7_0_SYSTEM_INT_CTL[irq] =
-			_VAL2FLD(CPUSS_CM7_0_SYSTEM_INT_CTL_CPU_INT_IDX, NvicMux0_IRQn + prio) |
-			CPUSS_CM7_0_SYSTEM_INT_CTL_CPU_INT_VALID_Msk;
-	} else {
-		CPUSS_CM7_1_SYSTEM_INT_CTL[irq] =
-			_VAL2FLD(CPUSS_CM7_1_SYSTEM_INT_CTL_CPU_INT_IDX, NvicMux0_IRQn + prio) |
-			CPUSS_CM7_1_SYSTEM_INT_CTL_CPU_INT_VALID_Msk;
-	}
+	/* Lower irqs (0-2) are used for SROM, upper IRQs for priority mapping */
+	prio = MAX(prio, SROM_IRQS);
 #endif
-	enable_cpu_int(prio);
+	NVIC_SetPriority(NvicMux0_IRQn + prio, prio);
+	NVIC_EnableIRQ(NvicMux0_IRQn + prio);
+	Cy_SysInt_SetInterruptSource(prio, irq);
 }
 
 void z_soc_irq_eoi(unsigned int irq)
@@ -145,8 +78,6 @@ unsigned int z_soc_irq_get_active(void)
 	const volatile uint32 *const int_state =
 #if IS_ENABLED(CONFIG_INFINEON_CAT1C_M0PLUS)
 		&CPUSS_CM0_INT0_STATUS;
-#elif IS_ENABLED(CONFIG_SMP)
-		(0UL != CY_IS_CM7_CORE_0 ? CPUSS_CM7_0_INT_STATUS : CPUSS_CM7_1_INT_STATUS);
 #elif IS_ENABLED(CONFIG_INFINEON_CAT1C_M7_0)
 		CPUSS_CM7_0_INT_STATUS;
 #else
@@ -166,6 +97,5 @@ unsigned int z_soc_irq_get_active(void)
 		return ((CONFIG_NUM_IRQS - 1) - 8 + (actirqn - Internal0_IRQn)) + 16;
 	}
 #endif
-
 	return (CONFIG_NUM_IRQS - 1) + 16;
 }
