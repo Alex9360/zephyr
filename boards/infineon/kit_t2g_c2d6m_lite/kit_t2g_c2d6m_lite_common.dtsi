@@ -111,6 +111,12 @@ uart9: &scb9 {
 	pinctrl-names = "default";
 };
 
+&adc0 {
+	clock-frequency = <26670000>;
+	clocks = <&clk_peri1 20 0 2>;
+	status = "okay";
+};
+
 &clk_peri1 {
 	status = "okay";
 };
