@@ -1286,7 +1286,9 @@ static int ifx_cat1_uart_init(const struct device *dev)
 #ifdef CONFIG_UART_ASYNC_API
 	data->scb_config.rxFifoTriggerLevel = 0;
 	data->scb_config.txFifoTriggerLevel = 1;
+#endif
 
+#if (CONFIG_SOC_FAMILY_INFINEON_CAT1C && defined(CONFIG_SOC_SERIES_CYT4DN))
 	/* Connect this SCB to the peripheral clock */
 	result = ifx_cat1_utils_peri_pclk_assign_divider(config->clk_dst, &data->clock);
 	if (result != CY_RSLT_SUCCESS) {
@@ -1303,14 +1305,16 @@ static int ifx_cat1_uart_init(const struct device *dev)
 	} else {
 		return -ENOTSUP;
 	}
-
 #endif
-#if (CONFIG_SOC_FAMILY_INFINEON_CAT1C && CONFIG_UART_INTERRUPT_DRIVEN)
+#if (CONFIG_SOC_FAMILY_INFINEON_CAT1C && CONFIG_UART_INTERRUPT_DRIVEN && !defined(CONFIG_SOC_SERIES_CYT4DN))
 	/* Enable the UART interrupt */
-	enable_sys_int(config->irq_num, config->irq_priority,
-		       (void (*)(const void *))(void *)ifx_cat1_uart_irq_handler, &data->obj);
+	//enable_sys_int(config->irq_num, config->irq_priority,
+	//	       (void (*)(const void *))(void *)ifx_cat1_uart_irq_handler, &data->obj);
 #endif
 
+#if (CONFIG_SOC_FAMILY_INFINEON_CAT1C && defined(CONFIG_SOC_SERIES_CYT4DN))
+	irq_enable(config->irq_num);
+#endif
 	/* Perform initial Uart configuration */
 	ret = ifx_cat1_uart_configure(dev, &config->dt_cfg);
 
@@ -1338,6 +1342,10 @@ static int ifx_cat1_uart_init(const struct device *dev)
 		Cy_TrigMux_Connect(TRIG_IN_MUX_0_SCB_RX0 + (3 * data->hw_resource.block_num),
 				   TRIG_OUT_MUX_0_PDMA0_TR_IN0 + data->async.dma_rx.dma_channel,
 				   false, TRIGGER_TYPE_LEVEL);
+#elif defined(COMPONENT_CAT1C)
+		Cy_TrigMux_Select(
+                       TRIG_OUT_1TO1_1_SCB_RX_TO_PDMA10 + (data->hw_resource.block_num * 2),
+                       false, TRIGGER_TYPE_EDGE);
 #endif
 	}
 
@@ -1364,6 +1372,10 @@ static int ifx_cat1_uart_init(const struct device *dev)
 		Cy_TrigMux_Connect(TRIG_IN_MUX_0_SCB_TX0 + (3 * data->hw_resource.block_num),
 				   TRIG_OUT_MUX_0_PDMA0_TR_IN0 + data->async.dma_tx.dma_channel,
 				   false, TRIGGER_TYPE_EDGE);
+#elif defined(COMPONENT_CAT1C)
+		Cy_TrigMux_Select(
+                       TRIG_OUT_1TO1_1_SCB_TX_TO_PDMA10 + (data->hw_resource.block_num * 2),
+                       false, TRIGGER_TYPE_EDGE);
 #endif
 	}
 
@@ -1437,7 +1449,7 @@ static DEVICE_API(uart, ifx_cat1_uart_driver_api) = {
 #define UART_DMA_CHANNEL(index, dir, ch_dir, src_data_size, dst_data_size)
 #endif /* CONFIG_UART_ASYNC_API */
 
-#if (CONFIG_SOC_FAMILY_INFINEON_CAT1C)
+#if (CONFIG_SOC_FAMILY_INFINEON_CAT1C &&  !defined(CONFIG_SOC_SERIES_CYT4DN))
 #define IRQ_INFO(n)                                                                                \
 	.irq_num = DT_INST_PROP_BY_IDX(n, system_interrupts, SYS_INT_NUM),                         \
 	.irq_priority = DT_INST_PROP_BY_IDX(n, system_interrupts, SYS_INT_PRI)
