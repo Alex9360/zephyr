@@ -32,7 +32,12 @@ static GPIO_PRT_Type *const gpio_ports[] = {
 	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt14)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt15)),
 	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt16)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt17)),
 	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt18)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt19)),
-	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt20)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt21))};
+	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt20)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt21)),
+	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt22)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt23)),
+	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt24)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt25)),
+	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt26)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt27)),
+	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt28)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt29)),
+	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt30))};
 
 /* @brief This function returns gpio drive mode, according to.
  * bias and drive mode params defined in pinctrl node.
@@ -49,32 +54,32 @@ static uint32_t soc_gpio_get_drv_mode(uint32_t flags)
 	if (flags_masked & SOC_GPIO_OPENDRAIN) {
 		/* drive_open_drain */
 		drv_mode = (flags_masked & SOC_GPIO_INPUTENABLE) ? CY_GPIO_DM_OD_DRIVESLOW
-							   : CY_GPIO_DM_OD_DRIVESLOW_IN_OFF;
+								 : CY_GPIO_DM_OD_DRIVESLOW_IN_OFF;
 
 	} else if (flags_masked & SOC_GPIO_OPENSOURCE) {
 		/* drive_open_source */
 		drv_mode = (flags_masked & SOC_GPIO_INPUTENABLE) ? CY_GPIO_DM_OD_DRIVESHIGH
-							   : CY_GPIO_DM_OD_DRIVESHIGH_IN_OFF;
+								 : CY_GPIO_DM_OD_DRIVESHIGH_IN_OFF;
 
 	} else if (flags_masked & SOC_GPIO_PUSHPULL) {
 		/* drive_push_pull */
 		drv_mode = (flags_masked & SOC_GPIO_INPUTENABLE) ? CY_GPIO_DM_STRONG
-							   : CY_GPIO_DM_STRONG_IN_OFF;
+								 : CY_GPIO_DM_STRONG_IN_OFF;
 
 	} else if ((flags_masked & SOC_GPIO_PULLUP) && (flags_masked & SOC_GPIO_PULLDOWN)) {
 		/* bias_pull_up and bias_pull_down */
 		drv_mode = (flags_masked & SOC_GPIO_INPUTENABLE) ? CY_GPIO_DM_PULLUP_DOWN
-							   : CY_GPIO_DM_PULLUP_DOWN_IN_OFF;
+								 : CY_GPIO_DM_PULLUP_DOWN_IN_OFF;
 
 	} else if (flags_masked & SOC_GPIO_PULLUP) {
 		/* bias_pull_up */
 		drv_mode = (flags_masked & SOC_GPIO_INPUTENABLE) ? CY_GPIO_DM_PULLUP
-							   : CY_GPIO_DM_PULLUP_IN_OFF;
+								 : CY_GPIO_DM_PULLUP_IN_OFF;
 
 	} else if (flags_masked & SOC_GPIO_PULLDOWN) {
 		/* bias_pull_down */
 		drv_mode = (flags_masked & SOC_GPIO_INPUTENABLE) ? CY_GPIO_DM_PULLDOWN
-							   : CY_GPIO_DM_PULLDOWN_IN_OFF;
+								 : CY_GPIO_DM_PULLDOWN_IN_OFF;
 	} else if ((flags_masked & SOC_GPIO_HIGHZ) | (flags_masked & SOC_GPIO_INPUTENABLE)) {
 		/* bias_pull_down */
 		drv_mode = CY_GPIO_DM_HIGHZ;
