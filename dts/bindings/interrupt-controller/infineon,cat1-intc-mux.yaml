@@ -1,0 +1,42 @@
+# Copyright (c) 2026 Linumiz
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Infineon CAT1 CPUSS interrupt multiplexer channel.
+
+  Each instance represents one NvicMux NVIC line (2nd-level aggregator).
+  The reg property is the NvicMux line index. The interrupts property
+  specifies the L1 NVIC IRQ that this aggregator is connected to.
+
+  Peripherals referencing this node use 2 cells:
+    cell 0 (irq)      - system interrupt number (0..CPUSS_SYSTEM_INT_NR-1)
+    cell 1 (priority) - NVIC priority for the parent NVIC line
+
+  Example:
+    intmux_ch3: interrupt-controller@3 {
+        compatible = "infineon,cat1-intc-mux";
+        reg = <3>;
+        interrupt-controller;
+        #interrupt-cells = <2>;
+        interrupts = <3 1>;
+    };
+
+    scb0: serial@40600000 {
+        interrupt-parent = <&intmux_ch3>;
+        interrupts = <18 2>;
+    };
+
+compatible: "infineon,cat1-intc-mux"
+
+include: [interrupt-controller.yaml, base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  "#interrupt-cells":
+    const: 2
+
+interrupt-cells:
+  - irq
+  - priority
