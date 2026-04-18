@@ -16,6 +16,8 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/drivers/clock_control/clock_control_ifx_cat1.h>
+#include <zephyr/drivers/clock_control/clock_control_ifx.h>
+#include <zephyr/drivers/clock_control.h>
 #include <zephyr/dt-bindings/clock/ifx_clock_source_common.h>
 
 #include <zephyr/logging/log.h>
@@ -63,7 +65,11 @@ struct ifx_cat1_i2c_data {
 	uint32_t async_pending;
 	struct ifx_cat1_clock clock;
 #if defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) || defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
+#if CONFIG_INFINEON_TRAVEO_FAMILY
+	struct ifx_clk_peri clk_info;
+#else
 	uint8_t clock_peri_group;
+#endif
 #endif
 	struct i2c_target_config *p_target_config;
 	uint8_t i2c_target_wr_byte;
@@ -83,6 +89,9 @@ struct ifx_cat1_i2c_config {
 	uint32_t irq_num;
 	en_clk_dst_t clk_dst;
 	void (*irq_config_func)(const struct device *dev);
+#if CONFIG_INFINEON_TRAVEO_FAMILY
+	const struct device *clk_dev;
+#endif
 	cy_cb_scb_i2c_handle_events_t i2c_handle_events_func;
 };
 
@@ -150,16 +159,9 @@ static void ifx_master_event_handler(void *callback_arg, uint32_t event)
 		(void)_i2c_abort_async(dev);
 		data->error = true;
 		k_sem_give(&data->transfer_sem);
-	}
-
-	/* Release semaphore if operation complete
-	 * When we have pending TX, RX operations, the semaphore will be released
-	 * after TX, RX complete.
-	 */
-	if (((data->async_pending == CAT1_I2C_PENDING_TX_RX) &&
-	     ((CY_SCB_I2C_MASTER_RD_CMPLT_EVENT & event) != 0)) ||
-	    (data->async_pending != CAT1_I2C_PENDING_TX_RX)) {
-
+	} else if (((data->async_pending == CAT1_I2C_PENDING_TX_RX) &&
+		    ((CY_SCB_I2C_MASTER_RD_CMPLT_EVENT & event) != 0)) ||
+		   (data->async_pending != CAT1_I2C_PENDING_TX_RX)) {
 		/* Release semaphore (After I2C async transfer is complete) */
 		k_sem_give(&data->transfer_sem);
 	}
@@ -233,7 +235,7 @@ void ifx_cat1_i2c_register_callback(const struct device *dev,
 	data->irq_cause = 0;
 }
 
-#ifdef USE_I2C_SET_PERI_DIVIDER
+#if defined(USE_I2C_SET_PERI_DIVIDER) || defined(CONFIG_INFINEON_TRAVEO_FAMILY)
 uint32_t _i2c_set_peri_divider(const struct device *dev, uint32_t freq, bool is_slave)
 {
 /* Peripheral clock values for different I2C speeds according PDL API Reference Guide */
@@ -269,7 +271,9 @@ uint32_t _i2c_set_peri_divider(const struct device *dev, uint32_t freq, bool is_
 	struct ifx_cat1_i2c_data *data = dev->data;
 	const struct ifx_cat1_i2c_config *const config = dev->config;
 	CySCB_Type *base = config->base;
+#if !defined(CONFIG_INFINEON_TRAVEO_FAMILY)
 	uint32_t block_num = ifx_cat1_uart_get_hw_block_num(config->base);
+#endif
 	uint32_t data_rate = 0;
 	uint32_t peri_freq = 0;
 	cy_rslt_t status;
@@ -290,7 +294,24 @@ uint32_t _i2c_set_peri_divider(const struct device *dev, uint32_t freq, bool is_
 	if (peri_freq <= 0) {
 		return 0;
 	}
+#if defined(CONFIG_INFINEON_TRAVEO_FAMILY)
+	status = clock_control_set_rate(config->clk_dev, (void *)&data->clk_info,
+					(void *)&peri_freq);
+	if (status != 0) {
+		return 0;
+	}
 
+	uint32_t rate;
+
+	status = clock_control_get_rate(config->clk_dev, (void *)&data->clk_info,
+					&rate);
+	if (status != 0) {
+		return 0;
+	}
+
+	data_rate = is_slave ? Cy_SCB_I2C_GetDataRate(base, rate)
+			     : Cy_SCB_I2C_SetDataRate(base, freq, rate);
+#else
 	if (_ifx_cat1_utils_peri_pclk_assign_divider(config->clk_dst,
 						     &data->clock) == CY_SYSCLK_SUCCESS) {
 		status = ifx_cat1_clock_set_enabled(&data->clock, false, false);
@@ -312,7 +333,7 @@ uint32_t _i2c_set_peri_divider(const struct device *dev, uint32_t freq, bool is_
 						  ifx_cat1_clock_get_frequency(&data->clock));
 		}
 	}
-
+#endif
 	return data_rate;
 }
 #endif
@@ -456,11 +477,13 @@ static int ifx_cat1_i2c_configure(const struct device *dev, uint32_t dev_config)
 		_i2c_default_config.slaveAddressMask = 0;
 		_i2c_default_config.ackGeneralAddr = false;
 	}
-
+#if  defined(CONFIG_INFINEON_TRAVEO_FAMILY)
+	_i2c_set_peri_divider(dev, data->frequencyhal_hz,
+			      (_i2c_default_config.i2cMode == CY_SCB_I2C_SLAVE));
+#endif
 	/* De-initialize SCB before re-configuring (required when switching modes) */
 	Cy_SCB_I2C_Disable(config->base, &data->context);
 	Cy_SCB_I2C_DeInit(config->base);
-
 	/* Configure the I2C resource */
 	rslt = Cy_SCB_I2C_Init(config->base, &_i2c_default_config, &data->context);
 	if (rslt != CY_SCB_I2C_SUCCESS) {
@@ -468,9 +491,8 @@ static int ifx_cat1_i2c_configure(const struct device *dev, uint32_t dev_config)
 		k_sem_give(&data->operation_sem);
 		return -EIO;
 	}
-
-#ifdef USE_I2C_SET_PERI_DIVIDER
-	_i2c_set_peri_divider(dev, CAT1_I2C_SPEED_STANDARD_HZ,
+#if  defined(USE_I2C_SET_PERI_DIVIDER)
+	_i2c_set_peri_divider(dev, data->frequencyhal_hz,
 			      (_i2c_default_config.i2cMode == CY_SCB_I2C_SLAVE));
 #elif defined(CONFIG_SOC_FAMILY_INFINEON_PSOC4)
 	if (_i2c_set_peri_divider_psoc4(dev, data->frequencyhal_hz, is_target_mode) != 0) {
@@ -658,8 +680,9 @@ static int ifx_cat1_i2c_init(const struct device *dev)
 	struct ifx_cat1_i2c_data *data = dev->data;
 	const struct ifx_cat1_i2c_config *config = dev->config;
 	int ret;
+#if !defined(CONFIG_INFINEON_TRAVEO_FAMILY)
 	cy_rslt_t result;
-
+#endif
 	/* Configure semaphores */
 	ret = k_sem_init(&data->transfer_sem, 0, 1);
 	if (ret < 0) {
@@ -676,18 +699,17 @@ static int ifx_cat1_i2c_init(const struct device *dev)
 	if (ret < 0) {
 		return ret;
 	}
-
+#if !defined(CONFIG_INFINEON_TRAVEO_FAMILY)
 	/* Connect this SCB to the peripheral clock */
 	result = ifx_cat1_utils_peri_pclk_assign_divider(config->clk_dst, &data->clock);
 	if (result != CY_RSLT_SUCCESS) {
 		return -EIO;
 	}
-
+#endif
 	/* Initial value for async operations */
 	data->pending = CAT1_I2C_PENDING_NONE;
 
 	config->irq_config_func(dev);
-
 	return ifx_cat1_i2c_configure(dev, I2C_MODE_CONTROLLER | I2C_SPEED_SET(I2C_SPEED_STANDARD));
 }
 
@@ -793,7 +815,8 @@ static DEVICE_API(i2c, i2c_cat1_driver_api) = {
 	.target_register = ifx_cat1_i2c_target_register,
 	.target_unregister = ifx_cat1_i2c_target_unregister};
 
-#if defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) || defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
+#if defined(COMPONENT_CAT1B) || (defined(COMPONENT_CAT1C) && !defined(CONFIG_INFINEON_TRAVEO_FAMILY))\
+       	|| defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
 #define PERI_INFO(n) .clock_peri_group = DT_PROP_BY_IDX(DT_INST_PHANDLE(n, clocks), peri_group, 1),
 #else
 #define PERI_INFO(n)
@@ -809,6 +832,13 @@ static DEVICE_API(i2c, i2c_cat1_driver_api) = {
 		.channel = DT_INST_PROP_BY_PHANDLE(n, clocks, channel),                            \
 	},                                                                                         \
 	PERI_INFO(n)
+#elif defined(CONFIG_INFINEON_TRAVEO_FAMILY)
+#define I2C_PERI_CLOCK_INIT(n)                                                                     \
+		.clk_info = {									   \
+		.rootclk_id = DT_INST_CLOCKS_CELL_BY_IDX(n, 0, rootclk_id),			   \
+		.divider_type = DT_INST_CLOCKS_CELL_BY_IDX(n, 0, divider_type),			   \
+		.divider_inst = DT_INST_CLOCKS_CELL_BY_IDX(n, 0, divider_inst),			   \
+	},
 #else
 #define I2C_PERI_CLOCK_INIT(n)                                                                     \
 	.clock = {                                                                                 \
@@ -818,6 +848,12 @@ static DEVICE_API(i2c, i2c_cat1_driver_api) = {
 		.channel = DT_INST_PROP_BY_PHANDLE(n, clocks, channel),                            \
 	},                                                                                         \
 	PERI_INFO(n)
+#endif
+
+#if defined(CONFIG_INFINEON_TRAVEO_FAMILY)
+#define CLOCK_GET(n)  .clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),
+#else
+#define CLOCK_GET(n)
 #endif
 
 #define I2C_CAT1_INIT_FUNC(n)                                                                      \
@@ -847,6 +883,7 @@ static DEVICE_API(i2c, i2c_cat1_driver_api) = {
 		.clk_dst = DT_INST_PROP(n, clk_dst),                                               \
 		.irq_config_func = ifx_cat1_i2c_irq_config_func_##n,                               \
 		.i2c_handle_events_func = i2c_handle_events_func_##n,                              \
+		CLOCK_GET(n)                              					   \
 	};                                                                                         \
                                                                                                    \
 	static struct ifx_cat1_i2c_data ifx_cat1_i2c_data##n = {                                   \
