@@ -11,7 +11,7 @@
 
 / {
 
-	model = "Infineon Evaluation board for CYT4DNJBZS M7 Core 0";
+	model = "Infineon Evaluation board for CYT4DNJBZS M7 Cluster";
 	compatible = "infineon,kit_t2g_c2d6m_lite", "infineon,cyt4dn";
 
 	aliases {
@@ -27,16 +27,10 @@
 		zephyr,console = &uart7;
 		zephyr,shell-uart = &uart7;
 	};
+};
 
-	gpio_keys {
-		compatible = "gpio-keys";
-
-		user_bt1: user_btn1 {
-			label = "SW_0";
-			gpios = <&gpio_prt0 2 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-			zephyr,code = <INPUT_KEY_0>;
-		};
-	};
+&user_bt1 {
+	status = "okay";
 };
 
 &m7_0 {

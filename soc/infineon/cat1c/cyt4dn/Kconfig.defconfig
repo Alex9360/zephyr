@@ -57,12 +57,6 @@ config NUM_IRQS
 	default 6360 if INFINEON_CAT1C_M0PLUS
 	default 6368 if INFINEON_CAT1C_M7
 
-choice INFINEON_CAT1C_CORE
-	default INFINEON_CAT1C_M0PLUS if SOC_CYT4DNJBZS_M0PLUS
-	default INFINEON_CAT1C_M7_0 if SOC_CYT4DNJBZS_M7_0
-	default INFINEON_CAT1C_M7_1 if SOC_CYT4DNJBZS_M7_1
-endchoice
-
 config SYS_CLOCK_HW_CYCLES_PER_SEC
 	default $(dt_node_int_prop_int,/cpus/cpu@0,clock-frequency) if INFINEON_CAT1C_M0PLUS
 	default $(dt_node_int_prop_int,/cpus/cpu@1,clock-frequency) if INFINEON_CAT1C_M7_0
@@ -75,6 +69,15 @@ config GEN_IRQ_VECTOR_TABLE
 	default n
 
 config BUILD_OUTPUT_HEX
+	default y
+
+config INFINEON_TRAVEO_FAMILY
+	default y
+
+config CLOCK_CONTROL
+	default y
+
+config ARM_MPU
 	default y
 
 endif # SOC_SERIES_CYT4DN

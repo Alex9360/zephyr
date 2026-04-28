@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-identifier: kit_t2g_c2d6m_lite/cyt4dnjbzs/m7_1
-name: KIT T2G_C2D6M LITE (M7_1)
+identifier: kit_t2g_c2d6m_lite/cyt4dnjbzs/m7
+name: Kit T2G C2D6M Lite (M7)
 type: mcu
 arch: arm
-ram: 256
-flash: 3168
+ram: 224
+flash: 2656
 toolchain:
   - zephyr
   - gnuarmemb
