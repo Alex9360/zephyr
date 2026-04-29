@@ -1,0 +1,52 @@
+/*
+ * Copyright (c) 2026 Infineon Technologies AG
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	chosen {
+		zephyr,sram = &sram_m7_1;
+		zephyr,flash = &flash_m7_1;
+		zephyr,dtcm = &m7_1_dtcm;
+		zephyr,itcm = &m7_1_itcm;
+		zephyr,console = &uart9;
+		zephyr,shell-uart = &uart9;
+	};
+
+	aliases {
+		led0 = &user_led3;
+		sw0 = &user_bt2;
+	};
+};
+
+&user_bt1 {
+	status = "disabled";
+};
+
+&user_bt2 {
+	status = "okay";
+};
+
+&m7_0 {
+	status = "disabled";
+};
+
+&m7_1 {
+	status = "okay";
+};
+
+&uart7 {
+	status = "disabled";
+};
+
+&uart9 {
+	status = "okay";
+};
+
+&gpio_prt9 {
+	status = "disabled";
+};
+
+&gpio_prt29 {
+	status = "okay";
+};
