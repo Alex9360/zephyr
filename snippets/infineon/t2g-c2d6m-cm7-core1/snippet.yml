@@ -1,0 +1,7 @@
+# Copyright (c) 2026 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+name: t2g-c2d6m-cm7-core1
+append:
+  EXTRA_CONF_FILE: t2g-c2d6m-cm7-core1.conf
+  EXTRA_DTC_OVERLAY_FILE: t2g-c2d6m-cm7-core1.overlay
