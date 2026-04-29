@@ -78,6 +78,12 @@ i2c11: &scb11 {
 	status = "okay";
 };
 
+&adc0 {
+	clock-frequency = <26670000>;
+	clocks = <&clk_peri1 20 0 2>;
+	status = "okay";
+};
+
 &gpio_prt7 {
 	status = "okay";
 };
