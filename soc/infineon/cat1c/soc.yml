@@ -79,5 +79,4 @@ family:
     - name: cyt4dnjbzs
       cpuclusters:
       - name: m0p
-      - name: m7_0
-      - name: m7_1
+      - name: m7

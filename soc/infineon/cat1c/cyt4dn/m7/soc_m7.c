@@ -16,9 +16,9 @@
 #include <cy_wdt.h>
 
 /* Cortex-M7 TCM control registers */
-#define IFX_ITCMCR_ADDR		0xE000EF90U
-#define IFX_DTCMCR_ADDR		0xE000EF94U
-#define IFX_TCMCR_INIT_VAL	0x2FU
+#define IFX_ITCMCR_ADDR    0xE000EF90U
+#define IFX_DTCMCR_ADDR    0xE000EF94U
+#define IFX_TCMCR_INIT_VAL 0x2FU
 
 void soc_prep_hook(void)
 {
@@ -28,13 +28,11 @@ void soc_prep_hook(void)
 	/* Allow write access to Vector Table Offset Register and ITCM/DTCM configuration register
 	 * (CPUSS_CM7_X_CTL.PPB_LOCK[3] and CPUSS_CM7_X_CTL.PPB_LOCK[1:0])
 	 */
-#ifdef CORE_NAME_CM7_1
-	CPUSS->CM7_1_CTL &= ~(0xB);
-#elif CORE_NAME_CM7_0
-	CPUSS->CM7_0_CTL &= ~(0xB);
-#else
-#error "Not valid"
-#endif
+	if (CY_IS_CM7_CORE_0) {
+		CPUSS->CM7_0_CTL &= ~(0xB);
+	} else {
+		CPUSS->CM7_1_CTL &= ~(0xB);
+	}
 
 	__DSB();
 	__ISB();
@@ -43,19 +41,17 @@ void soc_prep_hook(void)
 	SCB->ITCMCR = SCB->ITCMCR | 0x7; /* Set ITCMCR.EN, .RMW and .RETEN fields */
 	SCB->DTCMCR = SCB->DTCMCR | 0x7; /* Set DTCMCR.EN, .RMW and .RETEN fields */
 
-#ifdef CORE_NAME_CM7_0
-	CPUSS_CM7_0_CTL |= (0x1 << CPUSS_CM7_0_CTL_INIT_TCM_EN_Pos);
-	CPUSS_CM7_0_CTL |= (0x2 << CPUSS_CM7_0_CTL_INIT_TCM_EN_Pos);
-	CPUSS_CM7_0_CTL |= (0x1 << CPUSS_CM7_0_CTL_INIT_RMW_EN_Pos);
-	CPUSS_CM7_0_CTL |= (0x2 << CPUSS_CM7_0_CTL_INIT_RMW_EN_Pos);
-#elif CORE_NAME_CM7_1
-	CPUSS_CM7_1_CTL |= (0x1 << CPUSS_CM7_1_CTL_INIT_TCM_EN_Pos);
-	CPUSS_CM7_1_CTL |= (0x2 << CPUSS_CM7_1_CTL_INIT_TCM_EN_Pos);
-	CPUSS_CM7_1_CTL |= (0x1 << CPUSS_CM7_1_CTL_INIT_RMW_EN_Pos);
-	CPUSS_CM7_1_CTL |= (0x2 << CPUSS_CM7_1_CTL_INIT_RMW_EN_Pos);
-#else
-#error "Not valid"
-#endif
+	if (CY_IS_CM7_CORE_0) {
+		CPUSS_CM7_0_CTL |= (0x1 << CPUSS_CM7_0_CTL_INIT_TCM_EN_Pos);
+		CPUSS_CM7_0_CTL |= (0x2 << CPUSS_CM7_0_CTL_INIT_TCM_EN_Pos);
+		CPUSS_CM7_0_CTL |= (0x1 << CPUSS_CM7_0_CTL_INIT_RMW_EN_Pos);
+		CPUSS_CM7_0_CTL |= (0x2 << CPUSS_CM7_0_CTL_INIT_RMW_EN_Pos);
+	} else {
+		CPUSS_CM7_1_CTL |= (0x1 << CPUSS_CM7_1_CTL_INIT_TCM_EN_Pos);
+		CPUSS_CM7_1_CTL |= (0x2 << CPUSS_CM7_1_CTL_INIT_TCM_EN_Pos);
+		CPUSS_CM7_1_CTL |= (0x1 << CPUSS_CM7_1_CTL_INIT_RMW_EN_Pos);
+		CPUSS_CM7_1_CTL |= (0x2 << CPUSS_CM7_1_CTL_INIT_RMW_EN_Pos);
+	}
 
 	/* ITCMCR EN/RMW/RETEN enabled to access ITCM */
 	__UNALIGNED_UINT32_WRITE((void const *)IFX_ITCMCR_ADDR, IFX_TCMCR_INIT_VAL);
