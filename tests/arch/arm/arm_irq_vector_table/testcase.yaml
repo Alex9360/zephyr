@@ -15,3 +15,6 @@ tests:
       - imx95_evk_15x15/mimx9596/m7
       - imx95_evk/mimx9596/m7/ddr
       - imx95_evk/mimx9596/m7/flash
+      - kit_t2g_c2d6m_lite/cyt4dnjbzs/m0p
+      - kit_t2g_c2d6m_lite/cyt4dnjbzs/m7_0
+      - kit_t2g_c2d6m_lite/cyt4dnjbzs/m7_1
