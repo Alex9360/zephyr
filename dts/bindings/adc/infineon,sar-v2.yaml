@@ -43,5 +43,10 @@ properties:
   clock-frequency:
     type: int
 
+  total-channels:
+    type: int
+    required: true
+    description: total adc channels available in SoC.
+
 io-channel-cells:
   - input

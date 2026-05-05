@@ -35,6 +35,7 @@ struct ifx_cat1_sar_config {
 	struct ifx_clk_peri clk_info;
 	uint32_t frequency;
 	void (*irq_configure)(void);
+	uint8_t num_channels;
 };
 
 struct ifx_cat1_sar_data {
@@ -113,7 +114,7 @@ static int ifx_cat1_sar_channel_setup(const struct device *dev,
 	uint8_t channel_id = channel_cfg->channel_id;
 	int ret = 0;
 
-	if (channel_id >= CY_SAR2_CHAN_NUM(config->base)) {
+	if (channel_id >= config->num_channels) {
 		return -EINVAL;
 	}
 
@@ -326,6 +327,7 @@ static DEVICE_API(adc, ifx_cat1_driver_api) = {
 		.base = (PASS_SAR_Type *)DT_INST_REG_ADDR(n),				\
 		.irq_configure = ifx_cat1_adc_irq_configure##n,				\
 		.frequency = DT_INST_PROP_OR(n, clock_frequency, SAR_MAX_FREQ_HZ),	\
+		.num_channels = DT_INST_PROP(n, total_channels),			\
 		.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),			\
 		ADC_PERI_CLOCK_INIT(n)							\
 	};										\

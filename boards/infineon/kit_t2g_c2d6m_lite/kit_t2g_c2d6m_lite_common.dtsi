@@ -69,6 +69,7 @@ i2c11: &scb11 {
 };
 
 &adc0 {
+	total-channels = <24>;
 	clock-frequency = <26670000>;
 	clocks = <&clk_peri1 20 0 2>;
 	status = "okay";
