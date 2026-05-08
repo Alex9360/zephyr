@@ -24,6 +24,7 @@
 		zephyr,code-partition = &m7_0_partition;
 		zephyr,console = &uart7;
 		zephyr,shell-uart = &uart7;
+		zephyr,flash-controller = &flash_controller;
 	};
 
 	gpio_keys {
@@ -55,4 +56,8 @@
 
 &intmux_ch2 {
 	status = "disabled";
+};
+
+&flash_controller {
+	status = "okay";
 };
