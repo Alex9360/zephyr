@@ -24,6 +24,7 @@
 		zephyr,itcm = &m7_1_itcm;
 		zephyr,console = &uart9;
 		zephyr,shell-uart = &uart9;
+		zephyr,flash-controller = &flash_controller;
 	};
 
 	gpio_keys {
