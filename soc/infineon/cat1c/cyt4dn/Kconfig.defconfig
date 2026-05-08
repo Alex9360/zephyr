@@ -19,7 +19,8 @@ config MAX_IRQ_PER_AGGREGATOR
 	default 794
 
 config NUM_2ND_LEVEL_AGGREGATORS
-	default 8
+	default 5 if SOC_CYT4DN_CORE_M0PLUS
+	default 8 if SOC_CYT4DN_M7
 
 # Offset in _sw_isr_table for 2nd level system interrupts:
 # M7 and M0P: 16 (NvicMux 0-7 + Internal 0-7)
@@ -28,31 +29,40 @@ config 2ND_LVL_ISR_TBL_OFFSET
 
 # Aggregator N maps to NvicMux line N
 config 2ND_LVL_INTR_00_OFFSET
-	default 0
+	default 0 if SOC_CYT4DN_M7
+	default 3 if SOC_CYT4DN_CORE_M0PLUS
 
 config 2ND_LVL_INTR_01_OFFSET
-	default 1
+	default 1 if SOC_CYT4DN_M7
+	default 4 if SOC_CYT4DN_CORE_M0PLUS
 
 config 2ND_LVL_INTR_02_OFFSET
-	default 2
+	default 2 if SOC_CYT4DN_M7
+	default 5 if SOC_CYT4DN_CORE_M0PLUS
 
 config 2ND_LVL_INTR_03_OFFSET
-	default 3
+	default 3 if SOC_CYT4DN_M7
+	default 6 if SOC_CYT4DN_CORE_M0PLUS
 
 config 2ND_LVL_INTR_04_OFFSET
-	default 4
+	default 4 if SOC_CYT4DN_M7
+	default 7 if SOC_CYT4DN_CORE_M0PLUS
 
 config 2ND_LVL_INTR_05_OFFSET
-	default 5
+	default 5 if SOC_CYT4DN_M7
 
 config 2ND_LVL_INTR_06_OFFSET
-	default 6
+	default 6 if SOC_CYT4DN_M7
 
 config 2ND_LVL_INTR_07_OFFSET
-	default 7
+	default 7 if SOC_CYT4DN_M7
 
+# NUM_IRQS = 2ND_LVL_ISR_TBL_OFFSET + AGGREGATORS * MAX_IRQ_PER_AGGREGATOR
+#   M0+: 16 + 5*794 = 3986
+#   M7:  16 + 8*794 = 6368
 config NUM_IRQS
-	default 6368
+	default 6368 if SOC_CYT4DN_M7
+	default 3886 if SOC_CYT4DN_CORE_M0PLUS
 
 config SYS_CLOCK_HW_CYCLES_PER_SEC
 	default $(dt_node_int_prop_int,/cpus/cpu@0,clock-frequency) if SOC_CYT4DN_CORE_M0PLUS
