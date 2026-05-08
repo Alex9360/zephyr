@@ -52,3 +52,7 @@
 &gpio_prt29 {
 	status = "okay";
 };
+
+&intmux_ch2 {
+	status = "disabled";
+};

@@ -54,6 +54,38 @@ uart9: &scb9 {
 	status = "okay";
 };
 
+&intmux_ch0 {
+	status = "okay";
+};
+
+&intmux_ch1 {
+	status = "okay";
+};
+
+&intmux_ch2 {
+	status = "okay";
+};
+
+&intmux_ch3 {
+	status = "okay";
+};
+
+&intmux_ch4 {
+	status = "okay";
+};
+
+&intmux_ch5 {
+	status = "okay";
+};
+
+&intmux_ch6 {
+	status = "okay";
+};
+
+&intmux_ch7 {
+	status = "okay";
+};
+
 &eco {
 	status = "okay";
 };
