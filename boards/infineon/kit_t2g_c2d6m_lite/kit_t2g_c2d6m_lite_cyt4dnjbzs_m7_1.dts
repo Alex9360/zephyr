@@ -15,6 +15,7 @@
 	aliases {
 		led0 = &user_led3;
 		sw0 = &user_bt2;
+		pwm-led0 = &pwm_led2;
 	};
 
 	chosen {
