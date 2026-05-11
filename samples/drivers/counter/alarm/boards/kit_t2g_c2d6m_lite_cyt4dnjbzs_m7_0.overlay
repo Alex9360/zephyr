@@ -1,0 +1,31 @@
+#if 1
+&tcpwm0{
+	tcpwm0_1: tcpwm0_1@40380080 {
+		status = "okay";
+		frequency = <10000>;
+		counter0_1: counter0_1 {
+			compatible = "infineon,tcpwm-counter";
+			status = "okay";
+			clocks = <&clk_peri0 3 1 0>;
+		};
+	};
+};
+#endif
+
+&clk_peri0 {
+	status = "okay";
+};
+
+#if 0
+&tcpwm2{
+	tcpwm2_31: tcpwm2_31@40390f80 {
+		status = "okay";
+		frequency = <26000000>;
+		counter2_31: counter2_31 {
+			compatible = "infineon,tcpwm-counter";
+			status = "okay";
+			clocks = <&clk_peri0 82 0 1>;
+		};
+	};
+};
+#endif

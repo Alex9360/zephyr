@@ -1,0 +1,14 @@
+&tcpwm0_26 {
+	status = "okay";
+	frequency = <50000>;
+	pwm0_26: pwm0_26 {
+		pinctrl-0 = <&p7_6_pwm0_26_line_out>;
+		pinctrl-names = "default";
+		clocks = <&clk_peri0 28 1 0>;
+		status = "okay";
+	};
+};
+
+&clk_peri0 {
+	status = "okay";
+};
