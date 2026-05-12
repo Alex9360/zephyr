@@ -594,7 +594,7 @@ static int ifx_cat1_i2c_init(const struct device *dev)
 
 	config->irq_config_func(dev);
 
-	return 0;
+	return ifx_cat1_i2c_configure(dev, I2C_MODE_CONTROLLER | I2C_SPEED_SET(I2C_SPEED_STANDARD));
 }
 
 void _i2c_free(const struct device *dev)

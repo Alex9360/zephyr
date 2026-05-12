@@ -2431,7 +2431,7 @@
 			reg = <0x40900000 0x100000>;
 			#io-channel-cells = <1>;
 			system-interrupts = <160 3>;
-			status = "okay";
+			status = "disabled";
 		};
 
 		eth0: ethernet@40480000 {
@@ -2469,7 +2469,7 @@
                         compatible = "infineon,i2s";
                         reg = <0x40818000 0x200>;
                         system-interrupts = <752 4>, /* TX Structure */
-                        <753 4>; /* RX Structure */	
+                        <753 4>; /* RX Structure */
 			dmas = <&dma1 68>, <&dma1 72>;
 			dma-names = "tx", "rx";
                         status = "disabled";

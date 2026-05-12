@@ -261,7 +261,7 @@ static int start_dma_tx_transfer(const struct device *dev)
 		stream->mem_block = NULL;
 		return ret;
 	}
-	
+
 	return 0;
 }
 
@@ -414,7 +414,7 @@ static int configiure_i2s_clock(const struct device *dev, enum i2s_dir dir)
 	const struct ifx_i2s_config *config = dev->config;
 	struct ifx_i2s_data *const data = dev->data;
 	struct i2s_stream *stream;
-#if !(CONFIG_SOC_FAMILY_INFINEON_CAT1C) 
+#if !(CONFIG_SOC_FAMILY_INFINEON_CAT1C)
 	uint32_t clk_dest = PCLK_TDM0_CLK_IF_SRSS0 + data->clock.channel;
 	uint32_t peri_freq =
 		ifx_cat1_utils_peri_pclk_get_frequency((en_clk_dst_t)clk_dest, &data->clock);
@@ -830,6 +830,7 @@ static int ifx_i2s_trigger(const struct device *dev, enum i2s_dir dir, enum i2s_
 
 static int i2s_init(const struct device *dev)
 {
+	printk("init startred\n");
 	int ret = 0;
 	struct ifx_i2s_data *const data = dev->data;
 	const struct ifx_i2s_config *const config = dev->config;
@@ -882,7 +883,7 @@ static int i2s_init(const struct device *dev)
 		(void)Cy_AudioTDM_ReadRxData(tdm_rx);
 	}
 
-	LOG_DBG("Device %s inited", dev->name);
+	printk("Device %s inited", dev->name);
 
 	return 0;
 }
