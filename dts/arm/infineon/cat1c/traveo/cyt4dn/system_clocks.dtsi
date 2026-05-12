@@ -84,9 +84,9 @@
 				reg = <0x2>;
 				#clock-cells = <0>;
 				clocks = <&eco>;
-				p-div = <25>;
+				p-div = <36>;
 				q-div = <1>;
-				output-div = <2>;
+				output-div = <3>;
 				status = "disabled";
 			};
 
@@ -214,7 +214,7 @@
 				reg = <0x5>;
 				#clock-cells = <0>;
 				clocks = <&pll1>;
-				divider = <2>;
+				divider = <1>;
 				status = "disabled";
 			};
 
