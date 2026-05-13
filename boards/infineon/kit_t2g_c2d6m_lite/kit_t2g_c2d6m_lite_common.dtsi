@@ -79,6 +79,8 @@
 uart7: &scb7 {
 	compatible = "infineon,uart";
 	current-speed = <115200>;
+	dmas = <&dma1 30>, <&dma1 31>;
+	dma-names = "tx", "rx";
 	clocks = <&clk_peri1 15 0 1>;
 
 	/* UART pins */
@@ -89,11 +91,17 @@ uart7: &scb7 {
 uart9: &scb9 {
 	compatible = "infineon,uart";
 	current-speed = <115200>;
+	dmas = <&dma1 34>, <&dma1 35>;
+	dma-names = "tx", "rx";
 	clocks = <&clk_peri1 17 0 0>;
 
 	/* UART pins */
 	pinctrl-0 = <&p29_0_scb9_uart_rx &p29_1_scb9_uart_tx>;
 	pinctrl-names = "default";
+};
+
+&dma1 {
+	status = "okay";
 };
 
 &gpio_prt7 {
