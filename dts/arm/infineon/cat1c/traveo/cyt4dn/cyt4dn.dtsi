@@ -2582,5 +2582,49 @@
 				};
 			};
 		};
+
+		i2s0: tdm@40818000 {
+                        #address-cells = <1>;
+                        #size-cells = <0>;
+                        compatible = "infineon,i2s";
+                        reg = <0x40818000 0x200>;
+			interrupt-parent = <&intmux_ch3>;
+                        interrupts = <753 4>, /* RX Structure */
+				     <752 4>; /* TX Structure */
+                        status = "disabled";
+                };
+
+		i2s1: tdm@40818200 {
+                        #address-cells = <1>;
+                        #size-cells = <0>;
+                        compatible = "infineon,i2s";
+                        reg = <0x40818200 0x200>;
+			interrupt-parent = <&intmux_ch3>;
+                        interrupts = <755 4>, /* RX Structure */
+				     <754 4>; /* TX Structure */
+                        status = "disabled";
+                };
+
+		i2s2: tdm@40818400 {
+                        #address-cells = <1>;
+                        #size-cells = <0>;
+                        compatible = "infineon,i2s";
+                        reg = <0x40818400 0x200>;
+			interrupt-parent = <&intmux_ch3>;
+                        interrupts = <757 4>, /* RX Structure */
+				     <756 4>; /* TX Structure */
+                        status = "disabled";
+                };
+
+		i2s3: tdm@40818600 {
+                        #address-cells = <1>;
+                        #size-cells = <0>;
+                        compatible = "infineon,i2s";
+                        reg = <0x40818600 0x200>;
+			interrupt-parent = <&intmux_ch3>;
+                        interrupts = <759 4>, /* RX Structure */
+				     <758 4>; /* TX Structure */
+                        status = "disabled";
+                };
 	};
 };
