@@ -26,6 +26,7 @@
 		zephyr,console = &uart7;
 		zephyr,shell-uart = &uart7;
 		zephyr,flash-controller = &flash_controller;
+		zephyr,canbus = &can0;
 	};
 
 	gpio_keys {
@@ -45,6 +46,18 @@
 
 &uart7 {
 	status = "okay";
+};
+
+&canfd0 {
+	status = "okay";
+};
+
+can0: &can0_0 {
+	status = "okay";
+	clocks = <&clk_peri1 0 1 0>;
+	frequency = <30000000>;
+	pinctrl-0 = <&p5_1_can0_0_rx &p5_0_can0_0_tx>;
+	pinctrl-names = "default";
 };
 
 &gpio_prt0 {
