@@ -114,12 +114,10 @@ struct ifx_cat1_uart_data {
 #if !defined(CONFIG_SOC_FAMILY_INFINEON_TRAVEO)
 	struct ifx_cat1_clock clock;
 #endif
-#if defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) || defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
 #if CONFIG_SOC_FAMILY_INFINEON_TRAVEO
 	struct ifx_clk_peri clk_info;
-#else
+#elif defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) || defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
 	uint8_t clock_peri_group;
-#endif
 #endif
 #if CONFIG_UART_INTERRUPT_DRIVEN
 	uart_irq_callback_user_data_t irq_cb; /* Interrupt Callback */
