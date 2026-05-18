@@ -37,7 +37,9 @@ static GPIO_PRT_Type *const gpio_ports[] = {
 	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt24)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt25)),
 	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt26)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt27)),
 	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt28)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt29)),
-	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt30))};
+	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt30)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt31)),
+	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt32)), GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt33)),
+	GPIO_PORT_OR_NULL(DT_NODELABEL(gpio_prt34))};
 
 /* @brief This function returns gpio drive mode, according to.
  * bias and drive mode params defined in pinctrl node.
