@@ -1,0 +1,3 @@
+#include <arm/infineon/cat1c/traveo/cyt4bf/system_clocks.dtsi>
+#include <arm/infineon/cat1c/traveo/cyt4bf/cyt4bf.dtsi>
+#include <arm/infineon/cat1c/traveo/cyt4bf/cyt4bfc-pinctrl.dtsi>
