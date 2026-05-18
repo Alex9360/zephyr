@@ -80,6 +80,9 @@ int z_soc_irq_is_enabled(unsigned int irq)
 #if (CY_CPU_CORTEX_M0P)
 	return (CPUSS_CM0_SYSTEM_INT_CTL[sys_int] &
 		CPUSS_CM0_SYSTEM_INT_CTL_CPU_INT_VALID_Msk) != 0;
+#elif (CY_CPU_CORTEX_M4)
+	return (CPUSS_CM4_SYSTEM_INT_CTL[irq] &
+		CPUSS_CM4_SYSTEM_INT_CTL_CPU_INT_VALID_Msk) != 0;
 #else
 	if (CY_IS_CM7_CORE_0 != 0) {
 		return (CPUSS_CM7_0_SYSTEM_INT_CTL[sys_int] &
