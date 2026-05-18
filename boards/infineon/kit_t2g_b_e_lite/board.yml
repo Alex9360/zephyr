@@ -1,0 +1,10 @@
+# Copyright (c) 2026 Linumiz
+# Copyright (c) 2026 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+board:
+  name: kit_t2g_b_e_lite
+  full_name: T2G Body Entry Lite Kit
+  vendor: infineon
+  socs:
+  - name: cyt2bl5cae

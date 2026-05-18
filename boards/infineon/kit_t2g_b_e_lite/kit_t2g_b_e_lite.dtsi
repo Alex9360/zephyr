@@ -1,0 +1,131 @@
+/*
+ * Copyright (c) 2026 Linumiz
+ * Copyright (c) 2026 Infineon Technologies AG
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <infineon/cat1a/cyt2bl/cyt2bl.dtsi>
+#include <infineon/cat1a/cyt2bl/system_clocks.dtsi>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include "kit_t2g_b_e_lite-pinctrl.dtsi"
+
+/ {
+	leds {
+		compatible = "gpio-leds";
+
+		user_led0: led0 {
+			label = "LED_1";
+			gpios = <&gpio_prt5 0 GPIO_ACTIVE_LOW>;
+		};
+
+		user_led1: led1 {
+			label = "LED_2";
+			gpios = <&gpio_prt5 1 GPIO_ACTIVE_LOW>;
+		};
+
+		user_led2: led2 {
+			label = "LED_3";
+			gpios = <&gpio_prt5 2 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+
+		user_bt0: user_btn0 {
+			label = "SW_0";
+			gpios = <&gpio_prt5 3 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			zephyr,code = <INPUT_KEY_0>;
+		};
+
+		user_bt1: user_btn1 {
+			label = "SW_1";
+			gpios = <&gpio_prt17 0 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			zephyr,code = <INPUT_KEY_1>;
+		};
+	};
+
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		sram_m0p: memory@8000800 {
+			compatible = "mmio-sram";
+			reg = <0x08000800 DT_SIZE_K(30)>;
+		};
+
+		sram_m4: memory@8008000 {
+			compatible = "mmio-sram";
+			reg = <0x08008000 DT_SIZE_K(224)>;
+		};
+	};
+};
+
+&code_flash0 {
+	partitions {
+		ranges;
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		m0p_partition: partition_m0p@0 {
+			compatible = "zephyr,mapped-partition";
+			label = "m0p_partition";
+			reg = <0x0 DT_SIZE_K(512)>;
+		};
+
+		m4_partition: partition@80000 {
+			compatible = "zephyr,mapped-partition";
+			label = "m4_partition";
+			reg = <0x80000 DT_SIZE_K(3520)>;
+		};
+	};
+};
+
+uart0: &scb0 {
+	compatible = "infineon,uart";
+	current-speed = <115200>;
+	clocks = <&clk_peri0 30 0 0>;
+
+	/* UART pins */
+	pinctrl-0 = <&p0_1_scb0_uart_tx &p0_0_scb0_uart_rx>;
+	pinctrl-names = "default";
+};
+
+uart1: &scb1 {
+	compatible = "infineon,uart";
+	current-speed = <115200>;
+	clocks = <&clk_peri0 31 0 1>;
+
+	/* UART pins */
+	pinctrl-0 = <&p18_1_scb1_uart_tx &p18_0_scb1_uart_rx>;
+	pinctrl-names = "default";
+};
+
+&eco {
+	status = "okay";
+};
+
+&pll0 {
+	status = "okay";
+};
+
+&clk_hf0 {
+	status = "okay";
+};
+
+&clk_hf1 {
+	status = "okay";
+};
+
+&clk_hf2 {
+	status = "okay";
+};
+
+&gpio_prt13 {
+	status = "okay";
+};
+
+&gpio_prt18 {
+	status = "okay";
+};
