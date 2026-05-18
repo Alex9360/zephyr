@@ -1,0 +1,125 @@
+/*
+ * Copyright (c) 2026 Linumiz
+ * Copyright (c) 2026 Infineon Technologies AG
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <freq.h>
+
+/ {
+	clocks: clocks {
+		oscillators: oscillators {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			imo: imo@0 {
+				compatible = "infineon,clk-osc";
+				reg = <0x0>;
+				#clock-cells = <0>;
+				clock-frequency = <DT_FREQ_M(8)>;
+				status = "disabled";
+			};
+
+			ext: ext@1 {
+				compatible = "infineon,clk-osc";
+				reg = <0x1>;
+				#clock-cells = <0>;
+				status = "disabled";
+			};
+
+			eco: eco@2 {
+				compatible = "infineon,clk-osc";
+				reg = <0x2>;
+				#clock-cells = <0>;
+				clock-frequency = <DT_FREQ_M(16)>;
+				status = "disabled";
+			};
+
+			wco: wco@111 {
+				compatible = "infineon,clk-osc";
+				reg = <0x111>;
+				#clock-cells = <0>;
+				clock-frequency = <32768>;
+				status = "disabled";
+			};
+
+			ilo0: ilo0@110 {
+				compatible = "infineon,clk-osc";
+				reg = <0x110>;
+				#clock-cells = <0>;
+				clock-frequency = <32768>;
+				status = "disabled";
+			};
+
+			ilo1: ilo1@114 {
+				compatible = "infineon,clk-osc";
+				reg = <0x114>;
+				#clock-cells = <0>;
+				clock-frequency = <32768>;
+				status = "disabled";
+			};
+		};
+
+		pll {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			pll0: pll200@1 {
+				compatible = "infineon,clk-pll";
+				reg = <0x1>;
+				#clock-cells = <0>;
+				clocks = <&eco>;
+				p-div = <40>;
+				q-div = <2>;
+				output-div = <2>;
+				status = "disabled";
+			};
+		};
+
+		rootclocks {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			clk_hf0: clk_hf@0 {
+				compatible = "infineon,clk-hf";
+				reg = <0x0>;
+				#clock-cells = <0>;
+				clocks = <&pll0>;
+				divider = <1>;
+				slow-clk-divider = <1>;
+				status = "disabled";
+			};
+
+			clk_hf1: clk_hf@1 {
+				compatible = "infineon,clk-hf";
+				reg = <0x1>;
+				#clock-cells = <0>;
+				clocks = <&pll0>;
+				divider = <2>;
+				status = "disabled";
+			};
+
+			clk_hf2: clk_hf@2 {
+				compatible = "infineon,clk-hf";
+				reg = <0x2>;
+				#clock-cells = <0>;
+				clocks = <&pll0>;
+				divider = <4>;
+				status = "disabled";
+			};
+		};
+
+		periclocks {
+			clk_peri0: clk_peri0 {
+				compatible = "infineon,clk-peri";
+				#clock-cells = <3>;
+				clocks = <&clk_hf0>;
+				ifx,peri-clk-inst = <IFX_PERI_GRP_INST_SEL(0, 0)>;
+				ifx,8-bit-max-divider = <32>;
+				ifx,16-bit-max-divider = <16>;
+				ifx,16-5-bit-max-divider = <0>;
+				ifx,24-5-bit-max-divider = <8>;
+			};
+		};
+	};
+};
