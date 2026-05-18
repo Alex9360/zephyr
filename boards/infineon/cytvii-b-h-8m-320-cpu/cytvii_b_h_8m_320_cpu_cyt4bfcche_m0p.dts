@@ -1,0 +1,40 @@
+/*
+ * Copyright (c) 2026 Infineon Technologies AG,
+ * or an affiliate of Infineon Technologies AG.
+ * Copyright (c) 2026 Linumiz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+#include <arm/infineon/cat1c/traveo/cyt4bf/cyt4bf_m0p.dtsi>
+#include "cytvii_b_h_8m_320_cpu_common.dtsi"
+#include "cytvii_b_h_8m_320_cpu_cyt4bfcche_pinctrl.dtsi"
+
+/ {
+	model = "Infineon Evaluation board for CYT4BFCCHE core 0";
+	compatible = "infineon,cytvii-b-h-8m-320-cpu", "infineon,cyt4bf";
+
+	aliases {
+                led0 = &cpu_user_led0;
+        };
+
+	chosen {
+		zephyr,sram = &sram_m0plus;
+		zephyr,flash = &code_flash0;
+		zephyr,code-partition = &m0p_partition;
+		zephyr,console = &uart4;
+		zephyr,shell-uart = &uart4;
+	};
+};
+
+&uart4 {
+	status = "okay";
+};
+
+/* Interrupt mux 0-2 are reserved for SROM API calls */
+&cpuss_intc {
+        /delete-node/ interrupt-controller@0;
+        /delete-node/ interrupt-controller@1;
+        /delete-node/ interrupt-controller@2;
+};
