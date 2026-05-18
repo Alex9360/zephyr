@@ -1,0 +1,10 @@
+/*
+ * Copyright (c) 2026 Linumiz
+ * Copyright (c) 2026 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <arm/infineon/cat1c/traveo/cyt4bf/system_clocks.dtsi>
+#include <arm/infineon/cat1c/traveo/cyt4bf/cyt4bf.dtsi>
+#include <arm/infineon/cat1c/traveo/cyt4bf/cyt4bfc-pinctrl.dtsi>
