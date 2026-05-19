@@ -174,25 +174,6 @@ config SOC_CYT4BFBCHS
 	select SOC_SERIES_XMC7200
 	select SOC_PACKAGE_XMC7200_272_BGA
 
-# Infineon T2G Body High series MCUs: CYT4BFBCHE
-config SOC_CYT4BFBCHE_M0PLUS
-	bool
-	select SOC_CYT4BFBCHE
-
-config SOC_CYT4BFBCHE_M7_0
-	bool
-	select SOC_CYT4BFBCHE
-
-config SOC_CYT4BFBCHE_M7_1
-	bool
-	select SOC_CYT4BFBCHE
-
-config SOC_CYT4BFBCHE
-	bool
-	select SOC_DIE_XMC7200
-	select SOC_SERIES_XMC7200
-	select SOC_PACKAGE_XMC7200_272_BGA
-
 # Infineon T2G Body High series MCUs: CYT4BFCCJS
 config SOC_CYT4BFCCJS_M0PLUS
 	bool
@@ -261,7 +242,6 @@ config SOC
 	default "cyt4bfbcjs" if SOC_CYT4BFBCJS
 	default "cyt4bfbcje" if SOC_CYT4BFBCJE
 	default "cyt4bfbchs" if SOC_CYT4BFBCHS
-	default "cyt4bfbche" if SOC_CYT4BFBCHE
 	default "cyt4bfccjs" if SOC_CYT4BFCCJS
 	default "cyt4bfccje" if SOC_CYT4BFCCJE
 	default "cyt4bfcchs" if SOC_CYT4BFCCHS

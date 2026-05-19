@@ -35,7 +35,14 @@ config SOC_CYT4BF8CDS
 	select SOC_SERIES_CYT4XX
 	select SOC_DIE_CYT4BF
 
+# Infineon T2G Body High series MCUs: CYT4BFBCHE
+config SOC_CYT4BFBCHE
+	bool
+	select SOC_SERIES_CYT4XX
+	select SOC_DIE_CYT4BF
+
 config SOC
 	default "cyt4dnjbzs" if SOC_CYT4DNJBZS
 	default "cyt4bfcche" if SOC_CYT4BFCCHE
 	default "cyt4bf8cds" if SOC_CYT4BF8CDS
+	default "cyt4bfbche" if SOC_CYT4BFBCHE
