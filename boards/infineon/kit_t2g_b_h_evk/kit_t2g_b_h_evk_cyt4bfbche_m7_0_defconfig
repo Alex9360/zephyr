@@ -1,10 +1,13 @@
 # SPDX-FileCopyrightText: <text>Copyright (c) 2026 Infineon Technologies AG,
 # or an affiliate of Infineon Technologies AG. All rights reserved.</text>
+# Copyright (c) 2026 Linumiz
 #
 # SPDX-License-Identifier: Apache-2.0
 
 # General configuration
-CONFIG_ARM_MPU=y
+CONFIG_BUILD_OUTPUT_HEX=y
+CONFIG_BUILD_OUTPUT_BIN=y
+CONFIG_USE_DT_CODE_PARTITION=y
 CONFIG_HW_STACK_PROTECTION=y
 CONFIG_CACHE_MANAGEMENT=y
 
@@ -17,6 +20,3 @@ CONFIG_SERIAL=y
 
 # Enable GPIO driver
 CONFIG_GPIO=y
-
-# Enable clock controller
-CONFIG_CLOCK_CONTROL=y
