@@ -148,6 +148,16 @@ i2c11: &scb11 {
 	status = "okay";
 };
 
+&i2s0 {
+	clocks = <&clk_hf5>;
+	pinctrl-0 = <&p15_6_tdm_i2s0_tx_mck &p15_7_tdm_i2s0_tx_sck
+		     &p16_0_tdm_i2s0_tx_fsync &p16_1_tdm_i2s0_tx_sd>;
+	pinctrl-names = "default";
+	dmas = <&dma1 68>, <&dma1 72>;
+	dma-names = "tx", "rx";
+	status = "okay";
+};
+
 &dma1 {
 	status = "okay";
 };
