@@ -153,11 +153,17 @@
 uart3: &scb3 {
 	compatible = "infineon,uart";
 	current-speed = <115200>;
+	dmas = <&dma1 14>, <&dma1 15>;
+	dma-names = "tx", "rx";
 	clocks = <&clk_peri0 23 0 0>;
 
 	/* UART pins */
 	pinctrl-0 = <&p13_1_scb3_uart_tx &p13_0_scb3_uart_rx>;
 	pinctrl-names = "default";
+};
+
+&dma1 {
+	status = "okay";
 };
 
 &eco {
