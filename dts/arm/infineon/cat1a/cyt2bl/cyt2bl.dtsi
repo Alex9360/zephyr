@@ -95,6 +95,14 @@
 			};
 		};
 
+		wdt0: watchdog@4026c000 {
+			compatible = "infineon,watchdog";
+			reg = <0x4026c000 0x80>;
+			interrupt-parent = <&intmux_ch3>;
+			interrupts = <15 0>;
+			status = "disabled";
+		};
+
 		dma0: dw@40280000 {
 			#dma-cells = <1>;
 			compatible = "infineon,dma";
