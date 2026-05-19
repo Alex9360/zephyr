@@ -1,15 +1,13 @@
 /*
  * SPDX-FileCopyrightText: <text>Copyright (c) 2026 Infineon Technologies AG,
  * or an affiliate of Infineon Technologies AG. All rights reserved.</text>
+ * Copyright (c) 2026 Linumiz
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 /dts-v1/;
-#include <arm/infineon/cat1c/mpns/cyt4bf8cds.dtsi>
-#include <arm/infineon/cat1c/xmc7200/system_clocks.dtsi>
-#include <arm/infineon/cat1c/xmc7200/xmc7200_m0p.dtsi>
-#include <arm/infineon/cat1c/xmc7200/memory_partition.dtsi>
+#include <arm/infineon/cat1c/traveo/cyt4bf/cyt4bf_m0p.dtsi>
 #include "kit_t2g_b_h_lite_cyt4bf8cds_m0p-pinctrl.dtsi"
 #include "kit_t2g_b_h_lite_common.dtsi"
 
@@ -18,9 +16,25 @@
 	compatible = "infineon,kit_t2g_b_h_lite", "infineon,TVIIBH8M";
 
 	chosen {
-		zephyr,sram = &sram_m0p;
-		zephyr,flash = &flash_m0p;
-		zephyr,console = &uart0;
-		zephyr,shell-uart = &uart0;
+		zephyr,sram = &sram_m0plus;
+		zephyr,flash = &code_flash0;
+		zephyr,code-partition = &m0p_partition;
+		zephyr,console = &uart2;
+		zephyr,shell-uart = &uart2;
 	};
+};
+
+&gpio_prt14 {
+	status = "okay";
+};
+
+&uart2 {
+	status = "okay";
+};
+
+/* Interrupt mux 0-2 are reserved for SROM API calls */
+&cpuss_intc {
+	/delete-node/ interrupt-controller@0;
+	/delete-node/ interrupt-controller@1;
+	/delete-node/ interrupt-controller@2;
 };
