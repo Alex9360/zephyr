@@ -100,6 +100,22 @@
 			};
 		};
 
+		mbox: mbox@40220000 {
+			compatible = "infineon,cat1-mbox-pdl";
+			reg = <0x40220000 0x10000>;
+			interrupt-parent = <&intmux_ch4>;
+			interrupts = <0 0>,
+			             <1 0>,
+			             <2 0>,
+			             <3 0>,
+			             <4 0>,
+			             <5 0>,
+			             <6 0>,
+			             <7 0>;
+			#mbox-cells = <1>;
+			status = "disabled";
+		};
+
 		flash_controller: flash-controller@40240000 {
 			reg = <0x40240000 0x10000>;
 			#address-cells = <1>;
