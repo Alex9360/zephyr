@@ -23,6 +23,8 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
     - name: babblesim
       url-base: https://github.com/BabbleSim
+    - name: linumiz
+      url-base: git@gitlab.com:linumiz/infineon/development
 
   group-filter: [-babblesim, -optional, -testing]
 
@@ -187,8 +189,9 @@ manifest:
       path: modules/hal/gigadevice
       groups:
         - hal
-    - name: hal_infineon
-      revision: refs/pull/53/head
+    - name: hal_infineon-t2g
+      remote: linumiz
+      revision: release/ifx/upstream/v2.0.0-t2g
       path: modules/hal/infineon
       groups:
         - hal
