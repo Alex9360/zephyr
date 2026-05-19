@@ -1,15 +1,13 @@
 /*
  * SPDX-FileCopyrightText: <text>Copyright (c) 2026 Infineon Technologies AG,
  * or an affiliate of Infineon Technologies AG. All rights reserved.</text>
+ * Copyright (c) 2026 Linumiz
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 /dts-v1/;
-#include <arm/infineon/cat1c/mpns/cyt4bfbche.dtsi>
-#include <arm/infineon/cat1c/xmc7200/system_clocks.dtsi>
-#include <arm/infineon/cat1c/xmc7200/xmc7200_m7.dtsi>
-#include <arm/infineon/cat1c/xmc7200/memory_partition.dtsi>
+#include <arm/infineon/cat1c/traveo/cyt4bf/cyt4bf_m7.dtsi>
 #include "kit_t2g_b_h_evk_cyt4bfbche_m0p-pinctrl.dtsi"
 #include "kit_t2g_b_h_evk_common.dtsi"
 
@@ -19,10 +17,20 @@
 
 	chosen {
 		zephyr,sram = &sram_m7_1;
-		zephyr,flash = &flash_m7_1;
+		zephyr,flash = &code_flash0;
+		zephyr,code-partition = &m7_1_partition;
 		zephyr,dtcm = &dtcm;
 		zephyr,itcm = &itcm;
-		zephyr,console = &uart3;
-		zephyr,shell-uart = &uart3;
+		zephyr,console = &uart8;
+		zephyr,shell-uart = &uart8;
 	};
+
+};
+
+&uart8 {
+	status = "okay";
+};
+
+&gpio_prt12 {
+	status = "okay";
 };

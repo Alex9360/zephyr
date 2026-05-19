@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <arm/infineon/cat1c/traveo/cyt4bf/cyt4bfb-pinctrl.dtsi>
 /* Configure pin control bias mode for uart pins */
 &p13_1_scb3_uart_tx {
 	drive-push-pull;
@@ -19,5 +20,21 @@
 };
 
 &p13_3_scb3_uart_cts {
+	input-enable;
+};
+
+&p12_1_scb8_uart_tx {
+	drive-push-pull;
+};
+
+&p12_0_scb8_uart_rx {
+	input-enable;
+};
+
+&p12_2_scb8_uart_rts {
+	drive-push-pull;
+};
+
+&p12_3_scb8_uart_cts {
 	input-enable;
 };
