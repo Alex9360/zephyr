@@ -112,12 +112,10 @@ struct ifx_cat1_spi_data {
 	struct ifx_cat1_dma_stream dma_tx;
 #endif
 
-#if defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) || defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
 #if defined(CONFIG_SOC_FAMILY_INFINEON_TRAVEO)
 	struct ifx_clk_peri clk_info;
-#else
+#elif defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) || defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
 	uint8_t clock_peri_group;
-#endif
 #endif
 
 	struct ifx_cat1_resource_inst resource;
@@ -662,6 +660,9 @@ static int ifx_cat1_spi_init(const struct device *dev)
 #elif defined(CONFIG_SOC_DIE_CYT4DN)
 		Cy_TrigMux_Select(TRIG_OUT_1TO1_1_SCB_RX_TO_PDMA10 + (data->resource.block_num * 2),
 				  false, TRIGGER_TYPE_LEVEL);
+#elif defined(CONFIG_SOC_SERIES_CYT2BX)
+		Cy_TrigMux_Select(TRIG_OUT_1TO1_8_SCB_RX_TO_PDMA10 + (data->resource.block_num * 2),
+				  false, TRIGGER_TYPE_LEVEL);
 #endif
 	}
 
@@ -682,6 +683,9 @@ static int ifx_cat1_spi_init(const struct device *dev)
 				   false, TRIGGER_TYPE_EDGE);
 #elif defined(CONFIG_SOC_DIE_CYT4DN)
 		Cy_TrigMux_Select(TRIG_OUT_1TO1_1_SCB_TX_TO_PDMA10 + (data->resource.block_num * 2),
+				  false, TRIGGER_TYPE_LEVEL);
+#elif defined(CONFIG_SOC_SERIES_CYT2BX)
+		Cy_TrigMux_Select(TRIG_OUT_1TO1_8_SCB_TX_TO_PDMA10 + (data->resource.block_num * 2),
 				  false, TRIGGER_TYPE_LEVEL);
 #endif
 	}
