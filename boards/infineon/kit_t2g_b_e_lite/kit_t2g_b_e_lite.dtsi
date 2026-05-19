@@ -85,6 +85,8 @@
 uart0: &scb0 {
 	compatible = "infineon,uart";
 	current-speed = <115200>;
+	dmas = <&dma1 8>, <&dma1 9>;
+	dma-names = "tx", "rx";
 	clocks = <&clk_peri0 30 0 0>;
 
 	/* UART pins */
@@ -95,11 +97,17 @@ uart0: &scb0 {
 uart1: &scb1 {
 	compatible = "infineon,uart";
 	current-speed = <115200>;
+	dmas = <&dma1 10>, <&dma1 11>;
+	dma-names = "tx", "rx";
 	clocks = <&clk_peri0 31 0 1>;
 
 	/* UART pins */
 	pinctrl-0 = <&p18_1_scb1_uart_tx &p18_0_scb1_uart_rx>;
 	pinctrl-names = "default";
+};
+
+&dma1 {
+	status = "okay";
 };
 
 &eco {
