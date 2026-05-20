@@ -16,7 +16,8 @@ config 2ND_LEVEL_INTERRUPT_BITS
 	default 10
 
 config MAX_IRQ_PER_AGGREGATOR
-	default 794
+	default 794 if SOC_DIE_CYT4DN
+	default 574 if SOC_DIE_CYT4BF
 
 config NUM_2ND_LEVEL_AGGREGATORS
 	default 5 if SOC_CYT4XX_CORE_M0PLUS
@@ -61,8 +62,10 @@ config 2ND_LVL_INTR_07_OFFSET
 #   M0+: 16 + 5*794 = 3986
 #   M7:  16 + 8*794 = 6368
 config NUM_IRQS
-	default 6368 if SOC_CYT4XX_M7
-	default 3886 if SOC_CYT4XX_CORE_M0PLUS
+	default 3886 if (SOC_CYT4XX_CORE_M0PLUS && SOC_DIE_CYT4DN)
+	default 6368 if (SOC_CYT4XX_M7 && SOC_DIE_CYT4DN)
+	default 2886 if (SOC_CYT4XX_CORE_M0PLUS && SOC_DIE_CYT4BF)
+	default 4608 if (SOC_CYT4XX_M7 && SOC_DIE_CYT4BF)
 
 config SYS_CLOCK_HW_CYCLES_PER_SEC
 	default $(dt_node_int_prop_int,/cpus/cpu@0,clock-frequency) if SOC_CYT4XX_CORE_M0PLUS
