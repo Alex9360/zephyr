@@ -141,6 +141,17 @@ uart8: &scb8 {
 	dma-names = "tx", "rx";
  };
 
+i2c9: &scb9 {
+    compatible = "infineon,i2c";
+    #address-cells = <1>;
+    #size-cells = <0>;
+    /* I2C pins */
+    pinctrl-0 = <&p15_1_scb9_i2c_sda &p15_2_scb9_i2c_scl>;
+    pinctrl-names = "default";
+    clocks = <&clk_peri1 39 0 0>;
+    status = "okay";
+};
+
 &dma1 {
 	status = "okay";
 };
