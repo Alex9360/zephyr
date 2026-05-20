@@ -150,6 +150,18 @@
 	};
 };
 
+spi1: &scb1 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	compatible = "infineon,spi";
+	clocks = <&clk_peri0 21 1 3>;
+
+	/* SPI pins */
+	pinctrl-0 = <&p18_0_scb1_spi_miso &p18_1_scb1_spi_mosi &p18_2_scb1_spi_scl>;
+	pinctrl-names = "default";
+	cs-gpios = <&gpio_prt18 4 GPIO_ACTIVE_LOW>;
+};
+
 uart3: &scb3 {
 	compatible = "infineon,uart";
 	current-speed = <115200>;
