@@ -24,6 +24,7 @@
 		zephyr,code-partition = &m4_partition;
 		zephyr,console = &uart0;
 		zephyr,shell-uart = &uart0;
+		zephyr,flash-controller = &flash_controller;
 	};
 };
 
@@ -40,5 +41,9 @@
 };
 
 &gpio_prt17 {
+	status = "okay";
+};
+
+&flash_controller {
 	status = "okay";
 };
