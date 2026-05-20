@@ -38,3 +38,10 @@
 &gpio_prt18 {
 	status = "okay";
 };
+
+/* Interrupt mux 0-2 are reserved for SROM API calls */
+&cpuss_intc {
+	/delete-node/ interrupt-controller@0;
+	/delete-node/ interrupt-controller@1;
+	/delete-node/ interrupt-controller@2;
+};
