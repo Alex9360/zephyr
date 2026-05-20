@@ -16,7 +16,11 @@ extern void cat1c_srom_syscall_isr(void);
 const uintptr_t __irq_vector_table _irq_vector_table[CPU_IRQS] = {
 #if defined(CONFIG_SOC_CYT4XX_CORE_M0PLUS)
 	((uintptr_t)0x49),
+#if defined(CONFIG_SOC_DIE_CYT4DN)
 	((uintptr_t)0x281),
+#elif defined(CONFIG_SOC_DIE_CYT4BF)
+	((uintptr_t)0x2A5),
+#endif
 	((uintptr_t)cat1c_srom_syscall_isr),
 #else
 	((uintptr_t)_isr_wrapper),
