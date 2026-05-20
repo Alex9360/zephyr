@@ -29,11 +29,6 @@ void cat1c_srom_syscall_isr(void *arg)
 	NVIC_SetPendingIRQ(NvicMux0_IRQn);
 	/* Read back the register to ensure that the write has happened */
 	NVIC->ISPR[0U];
-	/* Clear the NVIC Pending bit of IRQ0. This is done as a fallback in case the system call
-	was suppressed (e.g., by disabled interrupts) */
-	NVIC_ClearPendingIRQ(NvicMux0_IRQn);
-	/* Read back the register to ensure that the write has happened */
-	NVIC->ICPR[0U];
 }
 
 static void cat1c_m0p_srom_init()
@@ -70,9 +65,7 @@ static void cat1c_m0p_srom_init()
 	NVIC_EnableIRQ(NvicMux2_IRQn);
 
 	/* Move IPC SROM API trigger to IRQ2 for the trampoline function. */
-	Cy_SysInt_EnableSystemInt(cpuss_interrupts_ipc_0_IRQn);
-	Cy_SysInt_SetInterruptSource(NvicMux0_IRQn, cpuss_interrupts_ipc_0_IRQn);
-	Cy_SysInt_SetInterruptSource(NvicMux1_IRQn, cpuss_interrupts_ipc_1_IRQn);
+	Cy_SysInt_SetInterruptSource(NvicMux2_IRQn, cpuss_interrupts_ipc_0_IRQn);
 }
 
 void soc_prep_hook(void)
@@ -86,10 +79,10 @@ void soc_prep_hook(void)
 
 static int soc_start_cm7(void)
 {
-#if CONFIG_SOC_CYT4DN_START_M7_0
+#if CONFIG_SOC_CYT4XX_START_M7_0
 	Cy_SysEnableCM7(CORE_CM7_0, DT_REG_ADDR(DT_NODELABEL(m7_0_partition)));
 #endif
-#if CONFIG_SOC_CYT4DN_START_M7_1
+#if CONFIG_SOC_CYT4XX_START_M7_1
 	Cy_SysEnableCM7(CORE_CM7_1, DT_REG_ADDR(DT_NODELABEL(m7_1_partition)));
 #endif
 	return 0;

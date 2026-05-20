@@ -10,6 +10,9 @@
 
 #define CY_SROM_DR_IPC_REQ_INTR_STRUCT   (0x0UL)
 #define CY_SROM_DR_IPC_RESP_INTR_STRUCT   (0x2UL)
+#define CY_SROM_RESP_NVIC_MUX	(0x3UL)
+#define CY_SROM_RESP_ENCODED_IRQ \
+	(IRQ_TO_L2(CY_SROM_DR_IPC_RESP_INTR_STRUCT) | CY_SROM_RESP_NVIC_MUX)
 
 static void (*gp_srom_resp_handler)(void) = NULL;
 
@@ -41,8 +44,8 @@ static int cat1c_srom_init()
 	IPC_INTR_STRUCT_Type *sromReqIntrStr = Cy_IPC_Drv_GetIntrBaseAddr(CY_SROM_DR_IPC_REQ_INTR_STRUCT);
 
 	/* Initialize SROM response interrupt*/
-	IRQ_CONNECT(CY_SROM_DR_IPC_INTR_NO, 2, cat1c_srom_responseip_isr, NULL, 0);
-	irq_enable(CY_SROM_DR_IPC_INTR_NO);
+	IRQ_CONNECT(CY_SROM_RESP_ENCODED_IRQ, 2, cat1c_srom_responseip_isr, NULL, 0);
+	irq_enable(CY_SROM_RESP_ENCODED_IRQ);
 
 	Cy_IPC_Drv_SetInterruptMask(sromRespIntrStr,
 				    (uint32_t)(1UL << (uint32_t)CY_IPC_CHAN_SYSCALL), 0UL);
