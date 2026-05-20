@@ -50,3 +50,13 @@
 &p10_2_scb4_spi_m_clk {
 	drive-push-pull;
 };
+
+&p15_2_scb9_i2c_scl {
+    drive-open-drain;
+    input-enable;
+};
+
+&p15_1_scb9_i2c_sda {
+    drive-open-drain;
+    input-enable;
+};
