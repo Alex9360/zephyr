@@ -117,6 +117,7 @@
 		};
 
 		flash_controller: flash-controller@40240000 {
+			compatible = "infineon,cat1-flash-controller-pdl";
 			reg = <0x40240000 0x10000>;
 			#address-cells = <1>;
 			#size-cells = <1>;
@@ -126,6 +127,30 @@
 				compatible = "soc-nv-flash";
 				reg = <0x10000000 DT_SIZE_K(1088)>;
 				ranges = <0x0 0x10000000 DT_SIZE_K(1088)>;
+				write-block-size = <512>;
+				erase-block-size = <32768>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+			};
+
+			/* Work flash - Large sector (2KB Sectors) */
+			work_flash0: flash@14000000 {
+				compatible = "soc-nv-flash";
+				reg = <0x14000000 DT_SIZE_K(72)>;
+				ranges = <0x0 0x14000000 DT_SIZE_K(72)>;
+				write-block-size = <64>;
+				erase-block-size = <2048>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+			};
+
+			/* Work flash - Small sector (128B Sectors) */
+			work_flash1: flash@14012000 {
+				compatible = "soc-nv-flash";
+				reg = <0x14012000 DT_SIZE_K(24)>;
+				ranges = <0x0 0x14012000 DT_SIZE_K(24)>;
+				write-block-size = <64>;
+				erase-block-size = <128>;
 				#address-cells = <1>;
 				#size-cells = <1>;
 			};
