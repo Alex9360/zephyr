@@ -31,3 +31,15 @@
 &p0_3_scb0_uart_cts {
 	input-enable;
 };
+
+&p13_0_scb3_spi_m_miso {
+	input-enable;
+};
+
+&p13_1_scb3_spi_m_mosi {
+	drive-push-pull;
+};
+
+&p13_2_scb3_spi_m_clk {
+	drive-push-pull;
+};
