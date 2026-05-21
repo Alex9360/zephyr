@@ -15,6 +15,10 @@
 	model = "Infineon Evaluation board for CYT4BFBCHE M7_1";
 	compatible = "infineon,kit_t2g_b_h_evk", "infineon,TVIIBH8M";
 
+	aliases {
+		pwm-led0 = &pwm_led1;
+	};
+
 	chosen {
 		zephyr,sram = &sram_m7_1;
 		zephyr,flash = &code_flash0;

@@ -7,6 +7,7 @@
  */
 #include <arm/infineon/cat1c/traveo/cyt4bf/cyt4bfbche.dtsi>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
+#include <zephyr/dt-bindings/pwm/pwm.h>
 
 / {
 	aliases {
@@ -33,6 +34,18 @@
 		user_led2: led_2 {
 			label = "LED_2";
 			gpios = <&gpio_prt16 3 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+
+		pwm_led0: pwm_led_0 {
+			pwms = <&pwm3_61 0 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
+		};
+
+		pwm_led1: pwm_led_1 {
+			pwms = <&pwm3_62 0 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
 		};
 	};
 
