@@ -106,6 +106,9 @@ uart3: &scb3 {
 	/* UART pins */
 	pinctrl-0 = <&p13_1_scb3_uart_tx &p13_0_scb3_uart_rx>;
 	pinctrl-names = "default";
+
+	dmas = <&dma1 22>, <&dma1 23>;
+	dma-names = "tx", "rx";
 };
 
 uart8: &scb8 {
@@ -118,7 +121,14 @@ uart8: &scb8 {
                     &p12_2_scb8_uart_rts &p12_3_scb8_uart_cts>;
 
         pinctrl-names = "default";
+
+	dmas = <&dma1 32>, <&dma1 33>;
+	dma-names = "tx", "rx";
  };
+
+&dma1 {
+	status = "okay";
+};
 
 &gpio_prt16 {
 	status = "okay";
