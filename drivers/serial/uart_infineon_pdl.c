@@ -1364,6 +1364,9 @@ static int ifx_cat1_uart_init(const struct device *dev)
 #elif defined(CONFIG_SOC_DIE_CYT4DN)
 		Cy_TrigMux_Select(TRIG_OUT_1TO1_1_SCB_RX_TO_PDMA10 + (data->hw_resource.block_num * 2),
 				  false, TRIGGER_TYPE_LEVEL);
+#elif defined(CONFIG_SOC_DIE_CYT4BF)
+		Cy_TrigMux_Select(TRIG_OUT_1TO1_2_SCB_RX_TO_PDMA10 + (data->hw_resource.block_num * 2),
+				  false, TRIGGER_TYPE_LEVEL);
 #elif defined(CONFIG_SOC_SERIES_CYT2BX)
 		Cy_TrigMux_Select(TRIG_OUT_1TO1_8_SCB_RX_TO_PDMA10 + (data->hw_resource.block_num * 2),
 				  false, TRIGGER_TYPE_LEVEL);
@@ -1395,6 +1398,9 @@ static int ifx_cat1_uart_init(const struct device *dev)
 				   false, TRIGGER_TYPE_EDGE);
 #elif defined(CONFIG_SOC_DIE_CYT4DN)
 		Cy_TrigMux_Select(TRIG_OUT_1TO1_1_SCB_TX_TO_PDMA10 + (data->hw_resource.block_num * 2),
+				  false, TRIGGER_TYPE_EDGE);
+#elif defined(CONFIG_SOC_DIE_CYT4BF)
+		Cy_TrigMux_Select(TRIG_OUT_1TO1_2_SCB_TX_TO_PDMA10 + (data->hw_resource.block_num * 2),
 				  false, TRIGGER_TYPE_EDGE);
 #elif defined(CONFIG_SOC_SERIES_CYT2BX)
 		Cy_TrigMux_Select(TRIG_OUT_1TO1_8_SCB_TX_TO_PDMA10 + (data->hw_resource.block_num * 2),
