@@ -13,6 +13,8 @@ set(pdl_dev_cat1c_dir ${ZEPHYR_HAL_INFINEON_MODULE_DIR}/mtb-pdl-cat1/devices/COM
 # Generate PDL specific SOC defines
 zephyr_compile_definitions(${CONFIG_SOC_PART_NUMBER})
 zephyr_compile_definitions_ifdef(CONFIG_SOC_FAMILY_INFINEON_CAT1 $<UPPER_CASE:${CONFIG_SOC}>)
+zephyr_compile_definitions_ifdef(CONFIG_SOC_SERIES_CYT4XX CY_DISABLE_XMC7000_DATA_CACHE)
+zephyr_compile_definitions_ifdef(CONFIG_SOC_SERIES_CYT2BX CY_DISABLE_XMC7000_DATA_CACHE)
 
 # Generate PDL specific define (w. *_device) for SOC module (e.g: CYBLE_416045_02)
 zephyr_compile_definitions_ifdef(CONFIG_SOC_CYBLE_416045_02 CYBLE_416045_02_device)
