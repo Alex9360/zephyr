@@ -23,5 +23,10 @@
 		zephyr,itcm = &itcm;
 		zephyr,console = &uart0;
 		zephyr,shell-uart = &uart0;
+		zephyr,flash-controller = &flash_controller;
 	};
+};
+
+&flash_controller {
+	status = "okay";
 };
