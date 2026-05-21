@@ -15,6 +15,10 @@
 	model = "Infineon Evaluation Lite board for CYT4BF8CDS M0";
 	compatible = "infineon,kit_t2g_b_h_lite", "infineon,TVIIBH8M";
 
+	aliases {
+                pwm-led0 = &pwm_led0;
+        };
+
 	chosen {
 		zephyr,sram = &sram_m0plus;
 		zephyr,flash = &code_flash0;
