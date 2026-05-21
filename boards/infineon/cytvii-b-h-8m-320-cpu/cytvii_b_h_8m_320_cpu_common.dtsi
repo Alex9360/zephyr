@@ -151,6 +151,21 @@ uart4: &scb4 {
 	dma-names = "tx", "rx";
 };
 
+spi5: &scb5 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	compatible = "infineon,spi";
+	clocks = <&clk_peri1 35 1 3>;
+
+	/* SPI pins */
+	pinctrl-0 = <&p4_0_scb5_spi_m_miso &p4_1_scb5_spi_m_mosi &p4_2_scb5_spi_m_clk>;
+	pinctrl-names = "default";
+	cs-gpios = <&gpio_prt4 3 GPIO_ACTIVE_LOW>;
+
+	dmas = <&dma1 26>, <&dma1 27>;
+	dma-names = "tx", "rx";
+};
+
 &dma1 {
 	status = "okay";
 };
