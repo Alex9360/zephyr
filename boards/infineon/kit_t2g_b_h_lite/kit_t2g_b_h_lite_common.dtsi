@@ -140,11 +140,26 @@ spi1: &scb3 {
 	dma-names = "tx", "rx";
 };
 
+i2c2: &scb4 {
+        compatible = "infineon,i2c";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        clocks = <&clk_peri1 34 0 2>;
+        /* I2C pins */
+        pinctrl-0 = <&p6_1_scb4_i2c_sda &p6_2_scb4_i2c_scl>;
+        pinctrl-names = "default";
+        status = "okay";
+};
+
 &dma1 {
 	status = "okay";
 };
 
 &gpio_prt5 {
+	status = "okay";
+};
+
+&gpio_prt6 {
 	status = "okay";
 };
 
