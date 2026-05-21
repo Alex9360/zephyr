@@ -19,3 +19,6 @@ CONFIG_SERIAL=y
 
 # Enable GPIO driver
 CONFIG_GPIO=y
+
+# Enable NOCACHE memory
+CONFIG_NOCACHE_MEMORY=y
