@@ -125,6 +125,21 @@ uart2: &scb2 {
 	pinctrl-names = "default";
 };
 
+spi1: &scb3 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	compatible = "infineon,spi";
+	clocks = <&clk_peri1 33 1 3>;
+
+	/* SPI pins */
+	pinctrl-0 = <&p13_0_scb3_spi_m_miso &p13_1_scb3_spi_m_mosi &p13_2_scb3_spi_m_clk>;
+	pinctrl-names = "default";
+	cs-gpios = <&gpio_prt13 5 GPIO_ACTIVE_LOW>;
+
+	dmas = <&dma1 22>, <&dma1 23>;
+	dma-names = "tx", "rx";
+};
+
 &dma1 {
 	status = "okay";
 };
