@@ -43,3 +43,13 @@
 &p13_2_scb3_spi_m_clk {
 	drive-push-pull;
 };
+
+&p6_1_scb4_i2c_sda {
+        drive-open-drain;
+        input-enable;
+};
+
+&p6_2_scb4_i2c_scl {
+	drive-open-drain;
+	input-enable;
+};
