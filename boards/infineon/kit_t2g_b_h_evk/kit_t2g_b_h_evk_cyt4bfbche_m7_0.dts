@@ -23,6 +23,7 @@
 		zephyr,itcm = &itcm;
 		zephyr,console = &uart3;
 		zephyr,shell-uart = &uart3;
+		zephyr,flash-controller = &flash_controller;
 	};
 };
 
@@ -31,5 +32,9 @@
 };
 
 &gpio_prt13 {
+	status = "okay";
+};
+
+&flash_controller {
 	status = "okay";
 };
