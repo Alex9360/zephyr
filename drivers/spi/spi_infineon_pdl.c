@@ -659,7 +659,7 @@ static int ifx_cat1_spi_init(const struct device *dev)
 		Cy_TrigMux_Connect(PERI_0_TRIG_IN_MUX_0_SCB_RX_TR_OUT0 + data->resource.block_num,
 				   PERI_0_TRIG_OUT_MUX_0_PDMA0_TR_IN0 + data->dma_rx.dma_channel,
 				   false, TRIGGER_TYPE_LEVEL);
-#elif defined(CONFIG_SOC_SERIES_CYT4DN)
+#elif defined(CONFIG_SOC_DIE_CYT4DN)
 		Cy_TrigMux_Select(TRIG_OUT_1TO1_1_SCB_RX_TO_PDMA10 + (data->resource.block_num * 2),
 				  false, TRIGGER_TYPE_LEVEL);
 #endif
@@ -680,7 +680,7 @@ static int ifx_cat1_spi_init(const struct device *dev)
 		Cy_TrigMux_Connect(PERI_0_TRIG_IN_MUX_0_SCB_TX_TR_OUT0 + data->resource.block_num,
 				   PERI_0_TRIG_OUT_MUX_0_PDMA0_TR_IN0 + data->dma_tx.dma_channel,
 				   false, TRIGGER_TYPE_EDGE);
-#elif defined(CONFIG_SOC_SERIES_CYT4DN)
+#elif defined(CONFIG_SOC_DIE_CYT4DN)
 		Cy_TrigMux_Select(TRIG_OUT_1TO1_1_SCB_TX_TO_PDMA10 + (data->resource.block_num * 2),
 				  false, TRIGGER_TYPE_LEVEL);
 #endif
