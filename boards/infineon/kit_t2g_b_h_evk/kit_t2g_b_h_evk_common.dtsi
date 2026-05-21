@@ -152,6 +152,14 @@ i2c9: &scb9 {
     status = "okay";
 };
 
+&adc0 {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        clocks = <&clk_peri1 42 0 3>;
+        clock-frequency = <26670000>;
+        status = "okay";
+};
+
 &dma1 {
 	status = "okay";
 };
