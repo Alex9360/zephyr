@@ -14,6 +14,7 @@
 / {
 	model = "Infineon Evaluation board for CYT4BFBCHE M0";
 	compatible = "infineon,kit_t2g_b_h_evk", "infineon,TVIIBH8M";
+
 	chosen {
 		zephyr,sram = &sram_m0plus;
 		zephyr,flash = &code_flash0;
