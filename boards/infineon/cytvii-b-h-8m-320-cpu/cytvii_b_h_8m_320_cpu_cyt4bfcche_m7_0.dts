@@ -28,6 +28,7 @@
 		zephyr,code-partition = &m7_0_partition;
 		zephyr,console = &uart3;
 		zephyr,shell-uart = &uart3;
+		zephyr,flash-controller = &flash_controller;
 	};
 
 	gpio_keys {
@@ -50,5 +51,9 @@
 };
 
 &gpio_prt21 {
+	status = "okay";
+};
+
+&flash_controller {
 	status = "okay";
 };
