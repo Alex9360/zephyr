@@ -125,6 +125,22 @@
 			};
 		};
 
+		mbox: mbox@40220000 {
+			compatible = "infineon,cat1-mbox-pdl";
+			reg = <0x40220000 0x10000>;
+			interrupt-parent = <&intmux_ch6>;
+			interrupts = <0 0>,
+				     <1 0>,
+				     <2 0>,
+				     <3 0>,
+				     <4 0>,
+				     <5 0>,
+				     <6 0>,
+				     <7 0>;
+			#mbox-cells = <1>;
+			status = "disabled";
+		};
+
 		wdt0: watchdog@4026c000 {
 			compatible = "infineon,watchdog";
 			reg = <0x4026C000 0x80>;
