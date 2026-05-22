@@ -50,3 +50,13 @@
 &p10_2_scb4_uart_rts {
 	drive-push-pull;
 };
+
+&p14_2_scb2_i2c_scl {
+	drive-open-drain;
+	input-enable;
+};
+
+&p14_1_scb2_i2c_sda {
+	drive-open-drain;
+	input-enable;
+};
