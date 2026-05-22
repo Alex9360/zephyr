@@ -170,6 +170,14 @@ spi5: &scb5 {
 	status = "okay";
 };
 
+&adc1 {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        clocks = <&clk_peri1 43 0 3>;
+        clock-frequency = <26670000>;
+        status = "okay";
+};
+
 &gpio_prt0 {
 	status = "okay";
 };
