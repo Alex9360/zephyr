@@ -123,6 +123,17 @@
         };
 };
 
+i2c2: &scb2 {
+        compatible = "infineon,i2c";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        clocks = <&clk_peri1 32 0 2>;
+        /* I2C pins */
+	pinctrl-0 = <&p14_2_scb2_i2c_scl &p14_1_scb2_i2c_sda>;
+	pinctrl-names = "default";
+        status = "okay";
+};
+
 uart3: &scb3 {
         compatible = "infineon,uart";
         current-speed = <115200>;
@@ -195,6 +206,10 @@ spi5: &scb5 {
 };
 
 &gpio_prt13 {
+	status = "okay";
+};
+
+&gpio_prt14 {
 	status = "okay";
 };
 
