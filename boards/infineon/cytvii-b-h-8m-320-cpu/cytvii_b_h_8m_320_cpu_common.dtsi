@@ -9,8 +9,21 @@
 #include <arm/infineon/cat1c/traveo/cyt4bf/cyt4bfcche.dtsi>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
 #include <zephyr/dt-bindings/pinctrl/ifx_cat1-pinctrl.h>
+#include <zephyr/dt-bindings/pwm/pwm.h>
 
 / {
+
+	pwmleds {
+		compatible = "pwm-leds";
+
+		pwm_led0: pwm_led_0 {
+			pwms = <&pwm4_10 0 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+		};
+
+		pwm_led1: pwm_led_1 {
+			pwms = <&pwm3_18 0 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+		};
+	};
 
 	leds {
 		compatible = "gpio-leds";
