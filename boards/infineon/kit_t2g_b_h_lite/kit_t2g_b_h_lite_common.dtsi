@@ -177,6 +177,18 @@ i2c2: &scb4 {
 
 };
 
+can0: &can0_2 {
+        status = "okay";
+        clocks = <&clk_peri1 2 1 0>;
+        frequency = <40000000>;
+        pinctrl-0 = <&p12_0_can0_2_tx &p12_1_can0_2_rx>;
+        pinctrl-names = "default";
+};
+
+&canfd0 {
+        status = "okay";
+};
+
 &dma1 {
 	status = "okay";
 };
@@ -191,6 +203,10 @@ i2c2: &scb4 {
 
 &gpio_prt17 {
 	status = "okay";
+};
+
+&gpio_prt12 {
+        status = "okay";
 };
 
 &eco {
