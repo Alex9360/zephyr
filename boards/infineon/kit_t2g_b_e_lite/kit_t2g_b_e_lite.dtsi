@@ -118,6 +118,17 @@ spi3: &scb3 {
 	cs-gpios = <&gpio_prt13 5 GPIO_ACTIVE_LOW>;
 };
 
+i2c0: &scb4 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	compatible = "infineon,i2c";
+	clocks = <&clk_peri0 34 0 1>;
+
+	/* I2C pins */
+	pinctrl-0 = <&p6_1_scb4_i2c_sda &p6_2_scb4_i2c_scl>;
+	pinctrl-names = "default";
+};
+
 &dma1 {
 	status = "okay";
 };
