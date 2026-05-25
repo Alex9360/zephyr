@@ -1839,6 +1839,16 @@
 			/omit-if-no-ref/ p24_2_sdhc0_clk_card: p24_2_sdhc0_clk_card {
 				pinmux = <DT_CAT1_PINMUX(24, 2, HSIOM_SEL_ACT_13)>;
 			};
+
+			/omit-if-no-ref/ p23_2_pwm4_10_line_out: p23_2_pwm4_10_line_out {
+				pinmux = <DT_CAT1_PINMUX(23, 2, HSIOM_SEL_ACT_0)>;
+				drive-push-pull;
+			};
+
+			/omit-if-no-ref/ p0_0_pwm3_18_line_out: p0_0_pwm3_18_line_out {
+				pinmux = <DT_CAT1_PINMUX(0, 0, HSIOM_SEL_ACT_0)>;
+				drive-push-pull;
+			};
 		};
 	};
 };
