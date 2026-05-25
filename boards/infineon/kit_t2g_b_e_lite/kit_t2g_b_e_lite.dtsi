@@ -133,6 +133,14 @@ i2c0: &scb4 {
 	status = "okay";
 };
 
+&adc0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clocks = <&clk_peri0 38 1 2>;
+	clock-frequency = <10670000>;
+	status = "okay";
+};
+
 &intmux_ch0 {
 	status = "okay";
 };
