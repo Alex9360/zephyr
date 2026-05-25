@@ -74,12 +74,10 @@ struct ifx_cat1_i2c_data {
 	bool error;
 	uint32_t async_pending;
 	struct ifx_cat1_clock clock;
-#if defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) || defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
 #if CONFIG_SOC_FAMILY_INFINEON_TRAVEO
 	struct ifx_clk_peri clk_info;
-#else
+#elif defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) || defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
 	uint8_t clock_peri_group;
-#endif
 #endif
 	struct i2c_target_config *p_target_config;
 	uint8_t i2c_target_wr_byte;
