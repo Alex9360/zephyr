@@ -8,10 +8,19 @@
 #include <arm/infineon/cat1a/cyt2b7/system_clocks.dtsi>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
 #include <zephyr/dt-bindings/pinctrl/ifx_cat1-pinctrl.h>
+#include <zephyr/dt-bindings/pwm/pwm.h>
 #include <common/freq.h>
 #include "cytvii_b_e_1m_100_cpu_pinctrl.dtsi"
 
 / {
+	pwmleds {
+		compatible = "pwm-leds";
+
+		pwm_led0: pwm_led_0 {
+			pwms = <&pwm0_21 0 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+		};
+	};
+
 	leds {
 		compatible = "gpio-leds";
 
