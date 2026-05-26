@@ -129,6 +129,18 @@ i2c0: &scb4 {
 	pinctrl-names = "default";
 };
 
+&canfd0 {
+	status = "okay";
+};
+
+&can0_2 {
+	status = "okay";
+	clocks = <&clk_peri0 8 1 0>;
+	frequency = <40000000>;
+	pinctrl-0 = <&p12_0_can0_2_tx &p12_1_can0_2_rx>;
+	pinctrl-names = "default";
+};
+
 &dma1 {
 	status = "okay";
 };
