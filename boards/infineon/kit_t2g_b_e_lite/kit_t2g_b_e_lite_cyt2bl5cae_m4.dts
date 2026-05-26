@@ -25,6 +25,7 @@
 		zephyr,console = &uart0;
 		zephyr,shell-uart = &uart0;
 		zephyr,flash-controller = &flash_controller;
+		zephyr,canbus = &can0_2;
 	};
 };
 
@@ -37,6 +38,10 @@
 };
 
 &gpio_prt5 {
+	status = "okay";
+};
+
+&gpio_prt12 {
 	status = "okay";
 };
 
