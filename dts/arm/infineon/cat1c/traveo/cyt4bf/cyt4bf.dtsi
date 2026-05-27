@@ -3666,6 +3666,41 @@
 			};
 		};
 
+       	       i2s0: i2s@40800000 {
+                        #address-cells = <1>;
+                        #size-cells = <0>;
+                        compatible = "infineon,i2s-v2";
+                        reg = <0x40800000 0x1000>;
+			interrupt-parent = <&intmux_ch5>;
+                        interrupts = <564 0>;
+                        dmas = <&dma1 55>, <&dma1 56>;
+                        dma-names = "tx", "rx";
+                        status = "disabled";
+                };
+
+               i2s1: i2s@40801000 {
+                        #address-cells = <1>;
+                        #size-cells = <0>;
+                        compatible = "infineon,i2s-v2";
+                        reg = <0x40801000 0x1000>;
+			interrupt-parent = <&intmux_ch5>;
+                        interrupts = <565 0>;
+                        dmas = <&dma1 57>, <&dma1 58>;
+                        dma-names = "tx", "rx";
+                        status = "disabled";
+                };
+
+               i2s2: i2s@40802000 {
+                        #address-cells = <1>;
+                        #size-cells = <0>;
+                        compatible = "infineon,i2s-v2";
+                        reg = <0x40802000 0x1000>;
+			interrupt-parent = <&intmux_ch5>;
+                        interrupts = <566 0>;
+                        dmas = <&dma1 59>, <&dma1 60>;
+                        dma-names = "tx", "rx";
+                        status = "disabled";
+                };
 
 		m7_0_itcm: itcm@a0000000 {
 			compatible = "zephyr,memory-region", "arm,itcm";
