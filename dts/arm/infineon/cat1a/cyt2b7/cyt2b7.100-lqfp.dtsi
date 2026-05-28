@@ -46,12 +46,62 @@
 			};
 
 			/omit-if-no-ref/ p2_0_can0_0_tx: p2_0_can0_0_tx {
-			        pinmux = <DT_CAT1_PINMUX(0, 0,	HSIOM_SEL_ACT_9)>;
+			        pinmux = <DT_CAT1_PINMUX(2, 0,	HSIOM_SEL_ACT_9)>;
 			        drive-push-pull;
 			};
 
 			/omit-if-no-ref/ p2_1_can0_0_rx: p2_1_can0_0_rx {
-			        pinmux = <DT_CAT1_PINMUX(0, 0,	HSIOM_SEL_ACT_9)>;
+			        pinmux = <DT_CAT1_PINMUX(2, 1,	HSIOM_SEL_ACT_9)>;
+			        input-enable;
+			};
+
+			/omit-if-no-ref/ p0_2_can0_1_tx: p0_2_can0_1_tx {
+			        pinmux = <DT_CAT1_PINMUX(0, 2,	HSIOM_SEL_ACT_9)>;
+			        drive-push-pull;
+			};
+
+			/omit-if-no-ref/ p0_3_can0_1_rx: p0_3_can0_1_rx {
+			        pinmux = <DT_CAT1_PINMUX(0, 3,	HSIOM_SEL_ACT_9)>;
+			        input-enable;
+			};
+
+			/omit-if-no-ref/ p6_2_can0_2_tx: p6_2_can0_2_tx {
+			        pinmux = <DT_CAT1_PINMUX(6, 2,	HSIOM_SEL_ACT_9)>;
+			        drive-push-pull;
+			};
+
+			/omit-if-no-ref/ p6_3_can0_2_rx: p6_3_can0_2_rx {
+			        pinmux = <DT_CAT1_PINMUX(6, 3,	HSIOM_SEL_ACT_9)>;
+			        input-enable;
+			};
+
+			/omit-if-no-ref/ p14_0_can1_0_tx: p14_0_can1_0_tx {
+			        pinmux = <DT_CAT1_PINMUX(14, 0,	HSIOM_SEL_ACT_9)>;
+			        drive-push-pull;
+			};
+
+			/omit-if-no-ref/ p14_1_can1_0_rx: p14_1_can1_0_rx {
+			        pinmux = <DT_CAT1_PINMUX(14, 1,	HSIOM_SEL_ACT_9)>;
+			        input-enable;
+			};
+
+			/omit-if-no-ref/ p17_0_can1_1_tx: p17_0_can1_1_tx {
+			        pinmux = <DT_CAT1_PINMUX(17, 0,	HSIOM_SEL_ACT_9)>;
+			        drive-push-pull;
+			};
+
+			/omit-if-no-ref/ p17_1_can1_1_rx: p17_1_can1_1_rx {
+			        pinmux = <DT_CAT1_PINMUX(17, 1,	HSIOM_SEL_ACT_9)>;
+			        input-enable;
+			};
+
+			/omit-if-no-ref/ p18_6_can1_2_tx: p18_6_can1_2_tx {
+			        pinmux = <DT_CAT1_PINMUX(18, 6,	HSIOM_SEL_ACT_9)>;
+			        drive-push-pull;
+			};
+
+			/omit-if-no-ref/ p18_7_can1_2_rx: p18_7_can1_2_rx {
+			        pinmux = <DT_CAT1_PINMUX(18, 7,	HSIOM_SEL_ACT_9)>;
 			        input-enable;
 			};
 
