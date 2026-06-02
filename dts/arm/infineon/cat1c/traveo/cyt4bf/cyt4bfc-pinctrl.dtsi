@@ -1885,6 +1885,16 @@
                                 drive-push-pull;
                                 input-enable;
                         };
+
+			/omit-if-no-ref/ p0_2_can0_1_tx: p0_2_can0_1_tx {
+				pinmux = <DT_CAT1_PINMUX(0, 2, HSIOM_SEL_ACT_9)>;
+				drive-push-pull;
+			};
+
+			/omit-if-no-ref/ p0_3_can0_1_rx: p0_3_can0_1_rx {
+				pinmux = <DT_CAT1_PINMUX(0, 3, HSIOM_SEL_ACT_9)>;
+				input-enable;
+			};
 		};
 	};
 };
