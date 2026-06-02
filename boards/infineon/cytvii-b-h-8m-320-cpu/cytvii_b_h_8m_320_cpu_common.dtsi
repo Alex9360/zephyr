@@ -190,6 +190,18 @@ spi5: &scb5 {
 	dma-names = "tx", "rx";
 };
 
+can0: &can0_1 {
+        clocks = <&clk_peri1 1 1 0>;
+        frequency = <40000000>;
+        pinctrl-0 = <&p0_2_can0_1_tx &p0_3_can0_1_rx>;
+        pinctrl-names = "default";
+        status = "okay";
+};
+
+&canfd0 {
+	status = "okay";
+};
+
 &dma1 {
 	status = "okay";
 };
