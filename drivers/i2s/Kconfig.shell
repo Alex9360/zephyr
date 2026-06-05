@@ -13,7 +13,7 @@ if I2S_SHELL
 
 config I2S_SHELL_STACK_SIZE
 	int "I2S shell streaming thread stack size"
-	default 1536
+	default 1024
 	help
 	  Stack size for the background thread that feeds PCM blocks to I2S.
 
@@ -33,7 +33,7 @@ config I2S_SHELL_BLOCK_FRAMES
 
 config I2S_SHELL_BLOCK_COUNT
 	int "Number of I2S TX blocks"
-	default 16
+	default 8
 	help
 	  Number of blocks in the TX slab. More blocks means more buffering
 	  at the cost of RAM.
