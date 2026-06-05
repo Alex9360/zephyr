@@ -24,6 +24,10 @@
 	SHELL_HELP("Apply any cached properties",                                                  \
 		   "<device>")
 
+#define CODEC_CONFIGURE_HELP                                                                       \
+	SHELL_HELP("Configure the codec I2S DAI for a stream",                                     \
+		   "<device> <rate> <bits> <channels> <playback|capture|both>")
+
 static const char *const codec_property_name[] = {
 	[AUDIO_PROPERTY_OUTPUT_VOLUME] = "volume",
 	[AUDIO_PROPERTY_OUTPUT_MUTE] = "mute",
@@ -170,6 +174,61 @@ static int cmd_apply_prop(const struct shell *sh, size_t argc, char *argv[])
 	return audio_codec_apply_properties(dev);
 }
 
+static int cmd_configure(const struct shell *sh, size_t argc, char *argv[])
+{
+	const struct device *dev;
+	struct audio_codec_cfg cfg = {0};
+	long rate;
+	long bits;
+	long channels;
+	char *endptr;
+
+	dev = shell_device_get_binding(argv[1]);
+	if (!dev) {
+		shell_error(sh, "Audio Codec device not found");
+		return -ENODEV;
+	}
+
+	rate = strtol(argv[2], &endptr, 0);
+	if (*endptr != '\0' || rate <= 0) {
+		shell_error(sh, "Invalid rate '%s'", argv[2]);
+		return -EINVAL;
+	}
+
+	bits = strtol(argv[3], &endptr, 0);
+	if (*endptr != '\0' || bits <= 0) {
+		shell_error(sh, "Invalid bits '%s'", argv[3]);
+		return -EINVAL;
+	}
+
+	channels = strtol(argv[4], &endptr, 0);
+	if (*endptr != '\0' || channels <= 0) {
+		shell_error(sh, "Invalid channels '%s'", argv[4]);
+		return -EINVAL;
+	}
+
+	if (strcmp(argv[5], "playback") == 0) {
+		cfg.dai_route = AUDIO_ROUTE_PLAYBACK;
+	} else if (strcmp(argv[5], "capture") == 0) {
+		cfg.dai_route = AUDIO_ROUTE_CAPTURE;
+	} else if (strcmp(argv[5], "both") == 0) {
+		cfg.dai_route = AUDIO_ROUTE_PLAYBACK_CAPTURE;
+	} else {
+		shell_error(sh, "Route must be playback, capture or both");
+		return -EINVAL;
+	}
+
+	cfg.dai_type = AUDIO_DAI_TYPE_I2S;
+	cfg.dai_cfg.i2s.word_size = (uint8_t)bits;
+	cfg.dai_cfg.i2s.channels = (uint8_t)channels;
+	cfg.dai_cfg.i2s.format = I2S_FMT_DATA_FORMAT_I2S;
+	/* The SoC I2S is the clock controller, so the codec is the target. */
+	cfg.dai_cfg.i2s.options = I2S_OPT_BIT_CLK_TARGET | I2S_OPT_FRAME_CLK_TARGET;
+	cfg.dai_cfg.i2s.frame_clk_freq = (uint32_t)rate;
+
+	return audio_codec_configure(dev, &cfg);
+}
+
 /* Device name autocompletion support */
 static void device_name_get(size_t idx, struct shell_static_entry *entry)
 {
@@ -185,6 +244,8 @@ SHELL_DYNAMIC_CMD_CREATE(dsub_device_name, device_name_get);
 
 /* clang-format off */
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_codec,
+	SHELL_CMD_ARG(configure, &dsub_device_name, CODEC_CONFIGURE_HELP, cmd_configure,
+			6, 0),
 	SHELL_CMD_ARG(start, &dsub_device_name, CODEC_START_HELP, cmd_start,
 			2, 0),
 	SHELL_CMD_ARG(stop, &dsub_device_name, CODEC_STOP_HELP, cmd_stop,
